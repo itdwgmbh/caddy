@@ -19,12 +19,12 @@ build:
     - go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
     - |
       xcaddy build \
-        --with https://github.com/caddy-dns/cloudflare \
-        --with https://github.com/caddy-dns/infomaniak \
-        --with https://github.com/caddy-dns/azure \
-        --with https://github.com/caddy-dns/bunny \
-        --with https://github.com/caddy-dns/hetzner \
-        --with https://github.com/caddy-dns/powerdns \
+        --with github.com/caddy-dns/cloudflare \
+        --with github.com/caddy-dns/infomaniak \
+        --with github.com/caddy-dns/azure \
+        --with github.com/caddy-dns/bunny \
+        --with github.com/caddy-dns/hetzner \
+        --with github.com/caddy-dns/powerdns \
         --output $TEMP_DIR/caddy
   artifacts:
     paths:
