@@ -14,9 +14,9 @@ build:
   image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:alpine
   script:
     - mkdir -p $TEMP_DIR
+    - go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
     - |
-      go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
-      xcaddy build latest \
+      xcaddy build \
         --with https://github.com/caddy-dns/cloudflare \
         --with https://github.com/caddy-dns/infomaniak \
         --with https://github.com/caddy-dns/azure \
