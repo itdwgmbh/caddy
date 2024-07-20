@@ -16,7 +16,7 @@ build:
     - mkdir -p $TEMP_DIR
     - |
       go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
-      xcaddy build \
+      xcaddy build latest \
         --with https://github.com/caddy-dns/cloudflare \
         --with https://github.com/caddy-dns/infomaniak \
         --with https://github.com/caddy-dns/azure \
