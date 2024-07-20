@@ -5,6 +5,8 @@ stages:
 variables:
   TEMP_DIR: ${CI_PROJECT_DIR}/tmp/caddy
   RCLONE_CONFIG_PATH: /root/.config/rclone/rclone.conf
+  CADDY_VERSION: latest
+  XCADDY_SUDO: 0
 
 before_script:
   - apk update && apk add --no-cache curl jq rclone bzip2 zip git
