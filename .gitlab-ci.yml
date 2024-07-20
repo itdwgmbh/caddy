@@ -1,0 +1,45 @@
+stages:
+  - build
+  - mirror
+
+variables:
+  TEMP_DIR: ${CI_PROJECT_DIR}/tmp/restic
+  RCLONE_CONFIG_PATH: /root/.config/rclone/rclone.conf
+
+before_script:
+  - apk update && apk add --no-cache curl jq rclone bzip2 zip
+
+build:
+  stage: download
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:alpine
+  script:
+    - mkdir -p $TEMP_DIR
+    - |
+      go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+      xcaddy build latest --with https://github.com/caddy-dns/cloudflare \
+        --with https://github.com/caddy-dns/infomaniak \
+        --with https://github.com/caddy-dns/azure \
+        --with https://github.com/caddy-dns/bunny \
+        --with https://github.com/caddy-dns/hetzner \
+        --with https://github.com/caddy-dns/powerdns \ --output $TEMP_DIR/caddy
+  artifacts:
+    paths:
+      - $TEMP_DIR
+    expire_in: 30 days
+
+mirror:
+  stage: mirror
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/alpine:latest
+  script:
+    - mkdir -p /root/.config/rclone
+    - |
+      echo "[gos3]" > $RCLONE_CONFIG_PATH
+      echo "type = s3" >> $RCLONE_CONFIG_PATH
+      echo "provider = Other" >> $RCLONE_CONFIG_PATH
+      echo "access_key_id = $AWS_ACCESS_KEY_ID" >> $RCLONE_CONFIG_PATH
+      echo "secret_access_key = $AWS_SECRET_ACCESS_KEY" >> $RCLONE_CONFIG_PATH
+      echo "endpoint = https://gos3.io" >> $RCLONE_CONFIG_PATH
+    - cd $TEMP_DIR
+    - zip -9 caddy.zip caddy
+    - rclone sync $TEMP_DIR gos3:itdw-mirror/caddy -v --config $RCLONE_CONFIG_PATH
+    - if [ $? -ne 0 ]; then echo "Rclone sync failed"; exit 1; fi
