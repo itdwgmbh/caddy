@@ -16,12 +16,14 @@ build:
     - mkdir -p $TEMP_DIR
     - |
       go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
-      xcaddy build latest --with https://github.com/caddy-dns/cloudflare \
+      xcaddy build \
+        --with https://github.com/caddy-dns/cloudflare \
         --with https://github.com/caddy-dns/infomaniak \
         --with https://github.com/caddy-dns/azure \
         --with https://github.com/caddy-dns/bunny \
         --with https://github.com/caddy-dns/hetzner \
-        --with https://github.com/caddy-dns/powerdns \ --output $TEMP_DIR/caddy
+        --with https://github.com/caddy-dns/powerdns \ 
+        --output $TEMP_DIR/caddy
   artifacts:
     paths:
       - $TEMP_DIR
