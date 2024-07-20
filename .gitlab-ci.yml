@@ -10,7 +10,7 @@ before_script:
   - apk update && apk add --no-cache curl jq rclone bzip2 zip
 
 build:
-  stage: download
+  stage: build
   image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/golang:alpine
   script:
     - mkdir -p $TEMP_DIR
