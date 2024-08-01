@@ -80,22 +80,24 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          RCLONE_DIR: ${{ github.workspace }}/rclone
+          RCLONE_CONF: ${{ github.workspace }}/rclone/rclone.conf
         run: |
-          mkdir -p $HOME/.config/rclone
-          echo "[gos3]" > $HOME/.config/rclone/rclone.conf
-          echo "type = s3" >> $HOME/.config/rclone/rclone.conf
-          echo "provider = Other" >> $HOME/.config/rclone/rclone.conf
-          echo "access_key_id = $HOME/.config/rclone/rclone.conf
-          echo "secret_access_key = $HOME/.config/rclone/rclone.conf
-          echo "endpoint = https://gos3.io" >> $HOME/.config/rclone/rclone.conf
+          mkdir -p ${{ env.RCLONE_DIR }}
+          echo "[gos3]" > ${{ env.RCLONE_CONF }}
+          echo "type = s3" >> ${{ env.RCLONE_CONF }}
+          echo "provider = Other" >> ${{ env.RCLONE_CONF }}
+          echo "access_key_id = ${{ env.RCLONE_CONF }}
+          echo "secret_access_key = ${{ env.RCLONE_CONF }}
+          echo "endpoint = https://gos3.io" >> ${{ env.RCLONE_CONF }}
 
       - name: Install rclone
         run: curl https://rclone.org/install.sh | sudo bash
 
       - name: Sync AMD64 to S3
         run: |
-          rclone sync ${{ env.TEMP_DIR }}/caddy-amd64.zip gos3:itdw-artifacts/caddy-amd64 -v --config $HOME/.config/rclone/rclone.conf
+          rclone sync ${{ env.TEMP_DIR }}/caddy-amd64.zip gos3:itdw-artifacts/caddy-amd64 -v --config ${{ env.RCLONE_CONF }}
 
       - name: Sync ARM64 to S3
         run: |
-          rclone sync ${{ env.TEMP_DIR }}/caddy-arm64.zip gos3:itdw-artifacts/caddy-arm64 -v --config $HOME/.config/rclone/rclone.conf
+          rclone sync ${{ env.TEMP_DIR }}/caddy-arm64.zip gos3:itdw-artifacts/caddy-arm64 -v --config ${{ env.RCLONE_CONF }}
