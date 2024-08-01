@@ -87,8 +87,8 @@ jobs:
           echo "[gos3]" > ${{ env.RCLONE_CONF }}
           echo "type = s3" >> ${{ env.RCLONE_CONF }}
           echo "provider = Other" >> ${{ env.RCLONE_CONF }}
-          echo "access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }} >> ${{ env.RCLONE_CONF }}
-          echo "secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }} >> ${{ env.RCLONE_CONF }}
+          echo "access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}" >> ${{ env.RCLONE_CONF }}
+          echo "secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ${{ env.RCLONE_CONF }}
           echo "endpoint = https://gos3.io" >> ${{ env.RCLONE_CONF }}
 
       - name: Install rclone
