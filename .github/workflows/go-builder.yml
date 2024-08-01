@@ -8,7 +8,8 @@ on:
     branches:
       - main
   schedule:
-    - cron: '27 3 1 * *' # Adjust this to a preferred random time if needed
+    - cron: '28 3 1 * *' # Adjust this to a preferred random time if needed
+  workflow_dispatch:
 
 env:
   TEMP_DIR: ${{ github.workspace }}/caddy
