@@ -94,8 +94,8 @@ jobs:
 
       - name: Sync AMD64 to S3
         run: |
-          rclone sync ${{ env.TEMP_DIR }}/caddy-amd64.zip gos3:itdw-artifacts/caddy-amd64 -v --config ${{ env.RCLONE_CONFIG_PATH }}
+          rclone sync ${{ env.TEMP_DIR }}/caddy-amd64.zip gos3:itdw-artifacts/caddy-amd64 -v --config $HOME/.config/rclone/rclone.conf
 
       - name: Sync ARM64 to S3
         run: |
-          rclone sync ${{ env.TEMP_DIR }}/caddy-arm64.zip gos3:itdw-artifacts/caddy-arm64 -v --config ${{ env.RCLONE_CONFIG_PATH }}
+          rclone sync ${{ env.TEMP_DIR }}/caddy-arm64.zip gos3:itdw-artifacts/caddy-arm64 -v --config $HOME/.config/rclone/rclone.conf
