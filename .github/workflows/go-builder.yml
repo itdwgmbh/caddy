@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
   schedule:
     - cron: '28 3 1 * *' # Adjust this to a preferred random time if needed
   workflow_dispatch:
@@ -59,14 +56,12 @@ jobs:
         run: |
           cd ${{ env.TEMP_DIR }}
           zip -9 caddy_linux_amd64.zip caddy-amd64
-          mv caddy_linux_amd64.zip ${{ env.TEMP_DIR }}/caddy_linux_amd64.zip
 
       - name: Repackage Caddy arm64
         if: matrix.goarch == 'arm64'
         run: |
           cd ${{ env.TEMP_DIR }}
           zip -9 caddy_linux_arm64.zip caddy-arm64
-          mv caddy_linux_arm64.zip ${{ env.TEMP_DIR }}/caddy_linux_arm64.zip
 
   mirror:
     runs-on: ubuntu-latest
@@ -101,6 +96,6 @@ jobs:
 
       - name: Send POST request with release.txt content
         run: |
-          curl -X POST https://hc.itdw.io/ping/bf3e2777-2707-4bf0-b22f-d13af430e8c3 \
+          curl -X POST https://hc.itdw.io/ping/1a5d8048-6ff6-4f1a-b107-7b186cb9b246 \
             -H "Content-Type: text/plain" \
             --data-binary @$${{ env.TEMP_DIR }}/release.txt
