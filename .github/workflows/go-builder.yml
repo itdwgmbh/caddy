@@ -96,6 +96,6 @@ jobs:
 
       - name: Send POST request with release.txt content
         run: |
-          curl -X POST https://hc.itdw.io/ping/1a5d8048-6ff6-4f1a-b107-7b186cb9b246 \
+          curl -X POST https://hc.itdw.io/ping/bf3e2777-2707-4bf0-b22f-d13af430e8c3 \
             -H "Content-Type: text/plain" \
             --data-binary @$${{ env.TEMP_DIR }}/release.txt
