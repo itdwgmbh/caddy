@@ -1,18 +1,21 @@
 #!/bin/sh
 set -e
 
-# Stop the service
-systemctl stop caddy
-
-# Reload systemd to apply the changes
-systemctl daemon-reload
-
-# Remove the caddy user and group
-if getent passwd caddy >/dev/null; then
-    userdel caddy
+# Stop and disable the service if it's being removed, not upgraded
+if [ "$1" = "remove" ] || [ "$1" = "purge" ]; then
+    systemctl stop caddy || true
+    systemctl disable caddy || true
+    systemctl daemon-reload
 fi
-if getent group caddy >/dev/null; then
-    groupdel caddy
+
+# Remove the caddy user and group only if the package is being purged
+if [ "$1" = "purge" ]; then
+    if getent passwd caddy >/dev/null; then
+        userdel -r caddy || true
+    fi
+    if getent group caddy >/dev/null; then
+        groupdel caddy || true
+    fi
 fi
 
 exit 0
