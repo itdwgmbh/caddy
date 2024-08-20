@@ -26,4 +26,7 @@ systemctl enable caddy
 # Start the service immediately
 systemctl start caddy
 
+# Trust the Caddy root certificate
+/usr/local/bin/caddy trust
+
 exit 0

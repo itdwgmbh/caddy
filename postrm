@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+# Stop the service
+systemctl stop caddy
+
 # Reload systemd to apply the changes
 systemctl daemon-reload
 
