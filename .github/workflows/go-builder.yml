@@ -97,7 +97,9 @@ jobs:
 
       - name: Build DEB package
         run: |
-          dpkg-deb --build caddy_${{ env.caddy_version }}_${{ matrix.arch }}.deb
+          dpkg-deb --build caddy_pkg.deb
+          # Rename the package to include the version number and architecture
+          mv caddy_pkg.deb caddy_${{ env.caddy_version }}_${{ matrix.arch }}.deb
     
       - name: Upload DEB packages as artifacts
         uses: actions/upload-artifact@v4
