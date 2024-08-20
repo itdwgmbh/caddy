@@ -28,7 +28,7 @@ jobs:
       - name: Get latest releases
         id: get_releases
         run: |
-          caddylatest_release=$(curl --silent "https://api.github.com/repos/caddyserver/caddy/releases/latest" | jq -r .tag_name)
+          caddy_latest_release=$(curl --silent "https://api.github.com/repos/caddyserver/caddy/releases/latest" | jq -r .tag_name)
           echo "caddy_release_tag=$caddy_latest_release" >> $GITHUB_ENV
   
       - name: Sanitize version numbers
@@ -53,7 +53,7 @@ jobs:
             --with github.com/caddy-dns/infomaniak \
             --with github.com/caddy-dns/bunny \
             --with github.com/digilolnet/caddy-bunny-ip \
-            --with github.com/caddy-dns/powerdns
+            --with github.com/caddy-dns/powerdns \
             --output output/caddy-${{ matrix.goarch }}
 
       - name: Create directory structure and control files

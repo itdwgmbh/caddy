@@ -10,4 +10,12 @@ systemctl disable caddy || true
 # Reload systemd to apply the changes
 systemctl daemon-reload
 
+# Remove the caddy user and group
+if getent passwd caddy >/dev/null; then
+    userdel caddy
+fi
+if getent group caddy >/dev/null; then
+    groupdel caddy
+fi
+
 exit 0
