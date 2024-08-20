@@ -85,15 +85,13 @@ jobs:
           chmod +x caddy_pkg/DEBIAN/postrm
 
           # Create control files
-          cat <<EOF > caddy_pkg/DEBIAN/control
-          Package: caddy
-          Version: ${{ env.caddy_version }}
-          Section: web
-          Priority: optional
-          Architecture: ${{ matrix.arch }}
-          Maintainer: IT-DW GmbH <support@it-dw.com>
-          Description: Caddy is a powerful, enterprise-ready, open source web server with automatic HTTPS written in Go. This package provides the ${{ matrix.arch }} binary.
-          EOF
+          echo "Package: caddy" > caddy_pkg/DEBIAN/control
+          echo "Version: ${env.caddy_version}" >> caddy_pkg/DEBIAN/control
+          echo "Section: web" >> caddy_pkg/DEBIAN/control
+          echo "Priority: optional" >> caddy_pkg/DEBIAN/control
+          echo "Architecture: ${matrix.arch}" >> caddy_pkg/DEBIAN/control
+          echo "Maintainer: IT-DW GmbH <support@it-dw.com>" >> caddy_pkg/DEBIAN/control
+          echo "Description: Caddy is a powerful, enterprise-ready, open source web server with automatic HTTPS written in Go. This package provides the ${matrix.arch} binary." >> caddy_pkg/DEBIAN/control
 
       - name: Build DEB package
         run: |
