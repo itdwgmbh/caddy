@@ -161,15 +161,13 @@ jobs:
       - name: Generate Packages file for amd64
         run: |
           cd repo
-          apt-ftparchive packages pool/main/restic/amd64 > dists/stable/main/binary-amd64/Packages
-          apt-ftparchive packages pool/main/resticprofile/amd64 >> dists/stable/main/binary-amd64/Packages
+          apt-ftparchive packages pool/main/caddy/amd64 > dists/stable/main/binary-amd64/Packages
           gzip -c dists/stable/main/binary-amd64/Packages > dists/stable/main/binary-amd64/Packages.gz
     
       - name: Generate Packages file for arm64
         run: |
           cd repo
-          apt-ftparchive packages pool/main/restic/arm64 > dists/stable/main/binary-arm64/Packages
-          apt-ftparchive packages pool/main/resticprofile/arm64 >> dists/stable/main/binary-arm64/Packages
+          apt-ftparchive packages pool/main/caddy/arm64 > dists/stable/main/binary-arm64/Packages
           gzip -c dists/stable/main/binary-arm64/Packages > dists/stable/main/binary-arm64/Packages.gz
           
       - name: Generate new Release file
