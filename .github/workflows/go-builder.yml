@@ -39,7 +39,7 @@ jobs:
 
       - name: Set Go version
         run: |
-          GO_VERSION = $(curl -s https://api.github.com/repos/golang/go/git/refs/tags | jq -r '.[].ref' | grep -Eo 'go[0-9]+\.[0-9]+' | sort -V | tail -n1 | sed 's/go//')
+          GO_VERSION=$(curl -s https://api.github.com/repos/golang/go/git/refs/tags | jq -r '.[].ref' | grep -Eo 'go[0-9]+\.[0-9]+' | sort -V | tail -n1 | sed 's/go//')
           echo "GO_VERSION=$GO_VERSION" >> $GITHUB_ENV
           
       - name: Set up Go
