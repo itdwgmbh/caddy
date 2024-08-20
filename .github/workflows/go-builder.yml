@@ -95,7 +95,7 @@ jobs:
           echo "Priority: optional" >> caddy_pkg/DEBIAN/control
           echo "Architecture: ${{ matrix.arch }}" >> caddy_pkg/DEBIAN/control
           echo "Maintainer: IT-DW GmbH <support@it-dw.com>" >> caddy_pkg/DEBIAN/control
-          echo "Depends: libnss3-tools,libnspr4,libnss3" >> caddy_pkg/DEBIAN/control
+          echo "Depends: libnss3-tools" >> caddy_pkg/DEBIAN/control
           echo "Description: Caddy is a powerful, enterprise-ready, open source web server with automatic HTTPS written in Go. This package provides the ${{ matrix.arch }} binary." >> caddy_pkg/DEBIAN/control
 
       - name: Build DEB package
