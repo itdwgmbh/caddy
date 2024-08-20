@@ -1,12 +1,6 @@
 #!/bin/sh
 set -e
 
-# Stop the service if it's running
-systemctl stop caddy || true
-
-# Disable the service so it doesn't start on boot
-systemctl disable caddy || true
-
 # Reload systemd to apply the changes
 systemctl daemon-reload
 
