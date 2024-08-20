@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        goarch: [amd64, arm64]
+        arch: [amd64, arm64]
     outputs:
       caddy_sanitized_version: ${{ steps.sanitize.outputs.caddy_version }}
     
@@ -49,12 +49,12 @@ jobs:
       - name: Build Caddy
         run: |
           mkdir -p output
-          GOARCH=${{ matrix.goarch }} xcaddy build \
+          GOARCH=${{ matrix.arch }} xcaddy build \
             --with github.com/caddy-dns/infomaniak \
             --with github.com/caddy-dns/bunny \
             --with github.com/digilolnet/caddy-bunny-ip \
             --with github.com/caddy-dns/powerdns \
-            --output output/caddy-${{ matrix.goarch }}
+            --output output/caddy-${{ matrix.arch }}
 
       - name: Create directory structure and control files
         run: |
@@ -65,7 +65,7 @@ jobs:
           mkdir -p caddy_pkg/lib/systemd/system
 
           # Move binary to package directory
-          mv output/caddy-${{ matrix.goarch }} caddy_pkg/usr/local/bin/caddy
+          mv output/caddy-${{ matrix.arch }} caddy_pkg/usr/local/bin/caddy
 
           # Move the Caddyfile to the package directory
           mv Caddyfile caddy_pkg/etc/caddy/Caddyfile
