@@ -1,0 +1,29 @@
+#!/bin/sh
+set -e
+
+# Create the group if it doesn't exist
+if ! getent group caddy >/dev/null; then
+    groupadd --system caddy
+fi
+
+# Create the user if it doesn't exist
+if ! id -u caddy >/dev/null 2>&1; then
+    useradd --system \
+        --gid caddy \
+        --create-home \
+        --home-dir /var/lib/caddy \
+        --shell /usr/sbin/nologin \
+        --comment "Caddy web server" \
+        caddy
+fi
+
+# Reload systemd to pick up the new service
+systemctl daemon-reload
+
+# Enable the service to start on boot
+systemctl enable caddy
+
+# Start the service immediately
+systemctl start caddy
+
+exit 0

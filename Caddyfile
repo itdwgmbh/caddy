@@ -1,0 +1,3 @@
+:80, :443 {
+    respond "Hello, you have reached the Caddy Webserver!"
+}
