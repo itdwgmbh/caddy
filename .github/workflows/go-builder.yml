@@ -39,7 +39,7 @@ jobs:
 
       - name: Set Go version
         run: |
-          GO_VERSION = curl -s https://api.github.com/repos/golang/go/git/refs/tags | jq -r '.[].ref' | grep -Eo 'go[0-9]+\.[0-9]+' | sort -V | tail -n1 | sed 's/go//'
+          GO_VERSION = $(curl -s https://api.github.com/repos/golang/go/git/refs/tags | jq -r '.[].ref' | grep -Eo 'go[0-9]+\.[0-9]+' | sort -V | tail -n1 | sed 's/go//')
           echo "GO_VERSION=$GO_VERSION" >> $GITHUB_ENV
           
       - name: Set up Go
@@ -95,7 +95,7 @@ jobs:
           echo "Priority: optional" >> caddy_pkg/DEBIAN/control
           echo "Architecture: ${{ matrix.arch }}" >> caddy_pkg/DEBIAN/control
           echo "Maintainer: IT-DW GmbH <support@it-dw.com>" >> caddy_pkg/DEBIAN/control
-          echo "Depends: libnss3-tools" >> caddy_pkg/DEBIAN/control
+          echo "Depends: libnss3-tools,libnspr4,libnss3" >> caddy_pkg/DEBIAN/control
           echo "Description: Caddy is a powerful, enterprise-ready, open source web server with automatic HTTPS written in Go. This package provides the ${{ matrix.arch }} binary." >> caddy_pkg/DEBIAN/control
 
       - name: Build DEB package
