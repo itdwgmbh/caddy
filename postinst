@@ -17,16 +17,30 @@ if ! id -u caddy >/dev/null 2>&1; then
         caddy
 fi
 
+# Set proper ownership
+chown -R caddy:caddy /var/lib/caddy || true
+chown -R caddy:caddy /var/log/caddy || true
+
 # Reload systemd to pick up the new service
 systemctl daemon-reload
 
-# Enable the service to start on boot
-systemctl enable caddy
+# On new installation, enable the service
+if [ "$1" = "configure" ] && [ -z "$2" ]; then
+    # This is a new installation
+    systemctl enable caddy
+    
+    # Install default Caddyfile if it doesn't exist
+    if [ ! -f /etc/caddy/Caddyfile ]; then
+        cp /etc/caddy/Caddyfile.dpkg-new /etc/caddy/Caddyfile || true
+    fi
+else
+    # This is an upgrade - restart the service
+    systemctl restart caddy || true
+fi
 
-# Start the service immediately
-systemctl start caddy
-
-# Trust the Caddy root certificate
-/usr/bin/caddy trust
+# Trust the Caddy root certificate (only on new installs)
+if [ "$1" = "configure" ] && [ -z "$2" ]; then
+    /usr/bin/caddy trust || true
+fi
 
 exit 0

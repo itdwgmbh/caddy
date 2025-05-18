@@ -78,7 +78,7 @@ jobs:
           --url "https://caddyserver.com" \
           --license "Apache-2.0" \
           --depends "ca-certificates" \
-          --deb-no-default-config-files \
+          --config-files /etc/caddy/Caddyfile \
           --deb-systemd ./caddy.service \
           --after-install ./postinst \
           --before-remove ./prerm.sh \
