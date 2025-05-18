@@ -66,7 +66,7 @@ jobs:
 
         # Copy binary and configuration
         cp ./caddy ./deb/usr/bin/
-        cp ./Caddyfile ./deb/etc/caddy/
+        cp ./Caddyfile ./deb/etc/caddy/Caddyfile
 
         # Build DEB package
         fpm -s dir -t deb \
@@ -80,10 +80,10 @@ jobs:
           --depends "ca-certificates" \
           --deb-no-default-config-files \
           --deb-systemd ./caddy.service \
-          --before-install ./scripts/preinst.sh \
-          --after-install ./scripts/postinst.sh \
-          --before-remove ./scripts/prerm.sh \
-          --after-remove ./scripts/postrm.sh \
+          --before-install ./preinst \
+          --after-install ./postinst \
+          --before-remove ./prerm.sh \
+          --after-remove ./postrm \
           -C ./deb \
           -p caddy.deb
 
