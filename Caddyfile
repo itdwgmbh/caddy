@@ -1,6 +1,32 @@
-:80, :443 {
-    respond "Hello, you have reached the Caddy Webserver!"
-    tls internal {
-		on_demand
-	}
+{
+  # Global options
+  admin 127.0.0.1:2019
+
+  # Use ZeroSSL as the only ACME CA
+  acme_ca https://acme.zerossl.com/v2/DV90
+
+  # Enable logging
+  log {
+    output file /var/log/caddy/access.log
+    format json
+  }
+
+  # Enable metrics
+  metrics 127.0.0.1:2020 {
+    enable_host_metrics
+  }
+}
+
+:80 {
+  # Set this path to your site's directory
+  root * /usr/share/caddy
+
+  # Enable logging for this host
+  log {
+    output file /var/log/caddy/{host}.access.log
+    format json
+  }
+
+  # Enable the static file server
+  file_server
 }
