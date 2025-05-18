@@ -73,17 +73,16 @@ jobs:
           -n caddy \
           -v "${VERSION}" \
           --vendor "Caddy Web Server" \
-          --maintainer "Your Name <your.email@example.com>" \
+          --maintainer "Caddy Builder <github-actions@example.com>" \
           --description "Caddy Web Server with plugins" \
           --url "https://caddyserver.com" \
           --license "Apache-2.0" \
           --depends "ca-certificates" \
           --deb-no-default-config-files \
           --deb-systemd ./caddy.service \
-          --before-install ./preinst.sh \
-          --after-install ./postinst.sh \
+          --after-install ./postinst \
           --before-remove ./prerm.sh \
-          --after-remove ./postrm.sh \
+          --after-remove ./postrm \
           -C ./deb \
           -p caddy.deb
 
