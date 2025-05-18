@@ -80,10 +80,10 @@ jobs:
           --depends "ca-certificates" \
           --deb-no-default-config-files \
           --deb-systemd ./caddy.service \
-          --before-install ./preinst \
-          --after-install ./postinst \
+          --before-install ./preinst.sh \
+          --after-install ./postinst.sh \
           --before-remove ./prerm.sh \
-          --after-remove ./postrm \
+          --after-remove ./postrm.sh \
           -C ./deb \
           -p caddy.deb
 
