@@ -8,9 +8,9 @@ RUN apk add --no-cache git ca-certificates tzdata
 # Set working directory
 WORKDIR /src
 
-# Download custom CA certificates from PKI server
-RUN wget -O /usr/local/share/ca-certificates/itinfra-roots.crt https://pki.itinfra.cloud:443/roots.pem && \
-    update-ca-certificates
+# Copy custom CA certificates
+COPY custom-cas/*.crt /usr/local/share/ca-certificates/
+RUN update-ca-certificates
 
 # Install xcaddy for building custom Caddy
 RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest

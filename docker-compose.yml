@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  caddy:
+    image: ${ITDW_CONTAINER_REGISTRY_SERVER}/library/caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "127.0.0.1:2019:2019"  # Admin API (optional, remove for production)
+    volumes:
+      # Override the default Caddyfile with your own
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Persist data (certificates, keys, etc.)
+      - caddy_data:/data
+      # Persist config
+      - caddy_config:/config
+    environment:
+      # Optional: Set log level
+      - CADDY_LOG_LEVEL=INFO
+    networks:
+      - caddy
+
+volumes:
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+
+networks:
+  caddy:
+    driver: bridge
