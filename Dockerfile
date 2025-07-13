@@ -8,9 +8,9 @@ RUN apk add --no-cache git ca-certificates tzdata
 # Set working directory
 WORKDIR /src
 
-# Copy custom CA certificates (optional - uncomment and add your CAs)
-COPY custom-cas/*.crt /usr/local/share/ca-certificates/
-RUN update-ca-certificates
+# Download custom CA certificates from PKI server
+RUN wget -O /usr/local/share/ca-certificates/itinfra-roots.crt https://pki.itinfra.cloud:443/roots.pem && \
+    update-ca-certificates
 
 # Install xcaddy for building custom Caddy
 RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
@@ -19,6 +19,9 @@ RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
 RUN xcaddy build \
     --with github.com/digilolnet/caddy-bunny-ip \
     --with github.com/greenpau/caddy-security
+
+# Get Caddy version for tagging
+RUN /src/caddy version | cut -d' ' -f1 > /src/caddy-version.txt
 
 # Final stage - distroless root user for privileged ports
 FROM gcr.io/distroless/static:latest
@@ -31,6 +34,9 @@ COPY --from=builder /src/caddy /usr/bin/caddy
 
 # Copy timezone data
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+
+# Copy default Caddyfile
+COPY Caddyfile /etc/caddy/Caddyfile
 
 # Expose standard ports (root user can bind to privileged ports)
 EXPOSE 80 443 2019

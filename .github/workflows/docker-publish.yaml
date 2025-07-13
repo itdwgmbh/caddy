@@ -47,6 +47,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build Docker image to extract version
+        id: build-for-version
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: caddy-version-check:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Extract Caddy version
+        id: version
+        run: |
+          CADDY_VERSION=$(docker run --rm caddy-version-check:latest /usr/bin/caddy version | cut -d' ' -f1)
+          echo "CADDY_VERSION=${CADDY_VERSION}" >> $GITHUB_OUTPUT
+          echo "Caddy version: ${CADDY_VERSION}"
+
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -54,6 +72,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
+            type=raw,value=${{ steps.version.outputs.CADDY_VERSION }}
             type=sha,format=short,prefix=
 
       - name: Build and push Docker image

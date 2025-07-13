@@ -1,0 +1,9 @@
+# Default Caddyfile - Redirects all traffic to https://it-dw.com
+{
+    admin 0.0.0.0:2019
+}
+
+# Catch-all redirect for all incoming requests
+:80, :443 {
+    redir https://it-dw.com temporary
+}
