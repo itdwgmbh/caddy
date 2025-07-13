@@ -50,7 +50,7 @@ jobs:
       - name: Download CA certificates
         run: |
           mkdir -p custom-cas
-          wget -O custom-cas/itinfra-roots.crt https://pki.itinfra.cloud:443/roots.pem
+          wget --no-check-certificate -O custom-cas/itinfra-roots.crt https://pki.itinfra.cloud:443/roots.pem
 
       - name: Build Docker image to extract version
         id: build-for-version
