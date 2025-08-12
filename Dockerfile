@@ -9,8 +9,8 @@ RUN apk add --no-cache git ca-certificates tzdata
 WORKDIR /src
 
 # Copy custom CA certificates
-COPY custom-cas/*.crt /usr/local/share/ca-certificates/
-RUN update-ca-certificates
+# COPY custom-cas/*.crt /usr/local/share/ca-certificates/
+# RUN update-ca-certificates
 
 # Install xcaddy for building custom Caddy
 RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
@@ -27,7 +27,7 @@ RUN /src/caddy version | cut -d' ' -f1 > /src/caddy-version.txt
 FROM gcr.io/distroless/static:latest
 
 # Copy CA certificates from builder (includes system CAs)
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+# COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # Copy binary from builder stage
 COPY --from=builder /src/caddy /usr/bin/caddy
