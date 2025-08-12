@@ -39,10 +39,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download CA certificates
-        run: |
-          mkdir -p custom-cas
-          wget --no-check-certificate -O custom-cas/itinfra-roots.crt https://pki.itinfra.cloud:443/roots.pem
+      # - name: Download CA certificates
+      #   run: |
+      #     mkdir -p custom-cas
+      #     wget --no-check-certificate -O custom-cas/itinfra-roots.crt https://pki.itinfra.cloud:443/roots.pem
 
       - name: Build Docker image to extract version
         id: build-for-version
