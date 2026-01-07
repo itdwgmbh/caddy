@@ -17,7 +17,7 @@ jobs:
     interpreter:
       type: DefaultInterpreter
       commands: |
-        $(curl -s https://api.github.com/repos/caddyserver/caddy/releases/latest | jq -r '.tag_name') > buildVersion
+        (curl -s https://api.github.com/repos/caddyserver/caddy/releases/latest | jq -r '.tag_name') > buildVersion
     useTTY: true
     condition: SUCCESSFUL
     optional: false
