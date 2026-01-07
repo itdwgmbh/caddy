@@ -15,6 +15,10 @@ jobs:
     output:
       type: RegistryOutput
       tags: '@server@/@project_path@/caddy:latest'
+    registryLogins:
+    - registryUrl: '@server@'
+      userName: '@job_token@'
+      passwordSecret: access-token
     platforms: linux/amd64,linux/arm64
     condition: SUCCESSFUL
     optional: false
