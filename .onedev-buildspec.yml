@@ -2,6 +2,14 @@ version: 43
 jobs:
 - name: Build Docker Image
   steps:
+  - type: CheckoutStep
+    name: Checkout Code
+    cloneCredential:
+      type: DefaultCredential
+    withLfs: false
+    withSubmodules: false
+    condition: SUCCESSFUL
+    optional: false
   - type: BuildImageStep
     name: Build Caddy Image
     output:
