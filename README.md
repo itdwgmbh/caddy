@@ -6,17 +6,16 @@ Internal build pipeline for custom Caddy Docker images.
 
 This repository builds Caddy with the following plugins:
 - [`caddy-bunny-ip`](https://github.com/digilolnet/caddy-bunny-ip) - Bunny CDN IP validation
-- [`caddy-security`](https://github.com/greenpau/caddy-security) - Security features
 
 Images are built monthly and pushed to the internal container registry with multi-architecture support (linux/amd64 and linux/arm64).
 
 ## Features
 
-- Multi-stage builds with distroless base image
-- Internal CA certificates from PKI infrastructure
+- Multi-stage builds with Alpine base image
 - Automated monthly builds
 - Multi-platform support (AMD64 and ARM64)
 - Default configuration redirects all traffic to https://it-dw.com
+- Health checks via Caddy admin API
 
 ## Usage
 
@@ -27,7 +26,7 @@ With default configuration (redirects to https://it-dw.com):
 docker run -d \
   -p 80:80 \
   -p 443:443 \
-  ${ITDW_CONTAINER_REGISTRY_SERVER}/caddy:latest
+  ${ITDW_CONTAINER_REGISTRY_SERVER}/library/caddy:latest
 ```
 
 With custom Caddyfile:
@@ -38,7 +37,7 @@ docker run -d \
   -v /path/to/Caddyfile:/etc/caddy/Caddyfile:ro \
   -v /path/to/data:/data \
   -v /path/to/config:/config \
-  ${ITDW_CONTAINER_REGISTRY_SERVER}/caddy:latest
+  ${ITDW_CONTAINER_REGISTRY_SERVER}/library/caddy:latest
 ```
 
 ### Example Caddyfile
@@ -56,12 +55,7 @@ example.com {
             # Your Bunny IP configuration
         }
     }
-    
-    # Security headers and features
-    security {
-        # Your security configuration
-    }
-    
+
     # Your site configuration
     reverse_proxy localhost:8080
 }
@@ -70,11 +64,9 @@ example.com {
 ### Docker Compose Example
 
 ```yaml
-version: '3.8'
-
 services:
   caddy:
-    image: ${ITDW_CONTAINER_REGISTRY_SERVER}/caddy:latest
+    image: ${ITDW_CONTAINER_REGISTRY_SERVER}/library/caddy:latest
     ports:
       - "80:80"
       - "443:443"
@@ -91,9 +83,8 @@ volumes:
 
 ## Build Process
 
-1. Downloads internal root CA certificates from `https://pki.itinfra.cloud:443/roots.pem`
-2. Builds Caddy with xcaddy including the specified plugins
-3. Creates a minimal distroless image
+1. Builds Caddy with xcaddy including the specified plugins
+2. Creates a minimal Alpine-based image with curl for health checks
 
 ## CI/CD
 
@@ -104,16 +95,17 @@ GitHub Actions workflow triggers:
 
 Images are tagged with:
 - `latest` - Most recent build
-- Caddy version (e.g., `v2.7.6`)
-- Git commit SHA
+- Caddy version (e.g., `v2.9.1`)
 
-## Configuration
+The workflow connects to the internal network via Tailscale before pushing to the registry.
 
 ### Required GitHub Secrets
 
 - `ITDW_CONTAINER_REGISTRY_SERVER`
 - `ITDW_CONTAINER_REGISTRY_USER`
 - `ITDW_CONTAINER_REGISTRY_PASSWORD`
+- `TS_OAUTH_CLIENT_ID`
+- `TS_OAUTH_SECRET`
 
 ### Ports
 

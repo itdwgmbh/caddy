@@ -10,8 +10,8 @@ on:
   workflow_dispatch:
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/caddy
+  REGISTRY: ${{ secrets.ITDW_CONTAINER_REGISTRY_SERVER }}
+  IMAGE_NAME: library/caddy
 
 jobs:
   build:
@@ -21,44 +21,20 @@ jobs:
       packages: write
       id-token: write
 
-    steps:          
+    steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.0.0
 
       - name: Set up QEMU for multi-platform builds
         uses: docker/setup-qemu-action@v3
 
-      - name: Log into GitHub Container Registry
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3.0.0
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      # - name: Download CA certificates
-      #   run: |
-      #     mkdir -p custom-cas
-      #     wget --no-check-certificate -O custom-cas/itinfra-roots.crt https://pki.itinfra.cloud:443/roots.pem
-
-      - name: Build Docker image to extract version
-        id: build-for-version
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          load: true
-          tags: caddy-version-check:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64
-
-      - name: Extract Caddy version
+      - name: Get latest Caddy version
         id: version
         run: |
-          CADDY_VERSION=$(docker run --rm caddy-version-check:latest /usr/bin/caddy version | cut -d' ' -f1)
+          CADDY_VERSION=$(curl -s https://api.github.com/repos/caddyserver/caddy/releases/latest | jq -r '.tag_name')
           echo "CADDY_VERSION=${CADDY_VERSION}" >> $GITHUB_OUTPUT
           echo "Caddy version: ${CADDY_VERSION}"
 
@@ -70,7 +46,24 @@ jobs:
           tags: |
             type=raw,value=latest
             type=raw,value=${{ steps.version.outputs.CADDY_VERSION }}
-            type=sha,format=short,prefix=
+
+      - name: Setup Tailscale
+        if: github.event_name != 'pull_request'
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:github-actions
+          version: latest
+          use-cache: 'true'
+
+      - name: Log into container registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.ITDW_CONTAINER_REGISTRY_USER }}
+          password: ${{ secrets.ITDW_CONTAINER_REGISTRY_PASSWORD }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6

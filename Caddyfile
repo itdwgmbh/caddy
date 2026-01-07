@@ -1,7 +1,15 @@
 # Default Caddyfile - Redirects all traffic to https://it-dw.com
 {
-    admin 0.0.0.0:2019
+	email zerossl@it-dw.com
+	acme_ca https://acme.zerossl.com/v2/DV90
+	admin 0.0.0.0:2019
+	log {
+		level INFO
+		output stdout
+	}
 }
+
+import sites-enabled/*
 
 # Catch-all redirect for all incoming requests
 :80, :443 {
