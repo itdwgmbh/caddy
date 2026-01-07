@@ -13,7 +13,7 @@ jobs:
   - type: CommandStep
     name: Get Caddy Version
     runInContainer: true
-    image: alpine:latest
+    image: '@server@/itdwgmbh/ci-image:latest'
     interpreter:
       type: DefaultInterpreter
       commands: |
