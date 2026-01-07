@@ -10,11 +10,27 @@ jobs:
     withSubmodules: false
     condition: SUCCESSFUL
     optional: false
+  - type: CommandStep
+    name: Get Caddy Version
+    runInContainer: true
+    image: alpine:latest
+    interpreter:
+      type: DefaultInterpreter
+      commands: |
+        $(curl -s https://api.github.com/repos/caddyserver/caddy/releases/latest | jq -r '.tag_name') > buildVersion
+    useTTY: true
+    condition: SUCCESSFUL
+    optional: false
+  - type: SetBuildVersionStep
+    name: Set Build Version
+    buildVersion: '@file:buildVersion@'
+    condition: SUCCESSFUL
+    optional: false
   - type: BuildImageStep
     name: Build Caddy Image
     output:
       type: RegistryOutput
-      tags: '@server@/@project_path@/caddy:latest'
+      tags: '@server@/@project_path@/caddy:latest @server@/@project_path@/caddy:@build_version@'
     registryLogins:
     - registryUrl: '@server@'
       userName: '@job_token@'
