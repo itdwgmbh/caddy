@@ -13,10 +13,7 @@ RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
 
 # Build Caddy with custom modules
 RUN xcaddy build \
-    --with github.com/digilolnet/caddy-bunny-ip \
-
-# Get Caddy version for tagging
-RUN /src/caddy version | cut -d' ' -f1 > /src/caddy-version.txt
+    --with github.com/digilolnet/caddy-bunny-ip
 
 # Final stage - Alpine for minimal size with shell access
 FROM alpine:latest
