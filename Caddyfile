@@ -1,4 +1,4 @@
-# Default Caddyfile - Redirects all traffic to https://it-dw.com
+# Default Caddyfile
 {
 	email zerossl@it-dw.com
 	acme_ca https://acme.zerossl.com/v2/DV90
@@ -10,8 +10,3 @@
 }
 
 import sites-enabled/*
-
-# Catch-all redirect for all incoming requests
-:80, :443 {
-    redir https://it-dw.com temporary
-}
