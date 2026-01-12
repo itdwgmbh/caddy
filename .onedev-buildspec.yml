@@ -38,6 +38,11 @@ jobs:
     platforms: linux/amd64,linux/arm64
     condition: SUCCESSFUL
     optional: false
+  triggers:
+  - type: BranchUpdateTrigger
+    userMatch: anyone
+  - type: ScheduleTrigger
+    cronExpression: 0 15 10 ? * 6#3
   retryCondition: never
   maxRetries: 3
   retryDelay: 30
