@@ -30,7 +30,7 @@ jobs:
     name: Build Caddy Image
     output:
       type: RegistryOutput
-      tags: '@server@/@project_path@/caddy:latest @server@/@project_path@/caddy:@build_version@'
+      tags: '@server@/itdwgmbh/public/caddy:latest @server@/itdwgmbh/public/caddy:@build_version@'
     registryLogins:
     - registryUrl: '@server@'
       userName: '@job_token@'
