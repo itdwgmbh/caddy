@@ -41,5 +41,9 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Entrypoint formats Caddyfile before starting
 ENTRYPOINT ["/entrypoint.sh"]
 
+# Set ENV for Caddy
+ENV XDG_DATA_HOME=/data
+ENV XDG_CONFIG_HOME=/config
+
 # Default command - configured for unprivileged ports
 CMD ["/usr/bin/caddy", "run", "--config", "/etc/caddy/Caddyfile"]
