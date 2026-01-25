@@ -1,6 +1,6 @@
 # Multi-stage build for optimal size and build speed
 # Using golang:alpine automatically gets the latest stable Go version
-FROM golang:alpine AS builder
+FROM crvp-nbg1-01.itinfra.cloud/docker/library/golang:alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates tzdata
@@ -16,7 +16,7 @@ RUN xcaddy build \
     --with github.com/digilolnet/caddy-bunny-ip
 
 # Final stage - Alpine for minimal size with shell access
-FROM alpine:latest
+FROM crvp-nbg1-01.itinfra.cloud/docker/library/alpine:latest
 
 # Install runtime dependencies
 RUN apk add --no-cache ca-certificates tzdata curl
