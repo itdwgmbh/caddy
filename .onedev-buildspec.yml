@@ -30,7 +30,7 @@ jobs:
     name: Build Caddy Image
     output:
       type: RegistryOutput
-      tags: '@server@/itdwgmbh/public/caddy:latest @server@/itdwgmbh/public/caddy:@build_version@'
+      tags: crvp-nbg1-01.itinfra.cloud/library/caddy:latest crvp-nbg1-01.itinfra.cloud/library/caddycaddy:@build_version@
     registryLogins:
     - registryUrl: '@server@'
       userName: '@job_token@'
