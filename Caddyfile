@@ -1,7 +1,7 @@
 # Default Caddyfile
 {
-	email zerossl@it-dw.com
-	acme_ca https://acme.itdw.cloud/directory
+	email support@it-dw.com
+	acme_ca https://acme.itdw.cloud/private/directory
 	admin 0.0.0.0:2019
 	log {
 		level INFO
