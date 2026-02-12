@@ -7,6 +7,11 @@
 		level INFO
 		output stdout
 	}
+	trusted_proxies bunny {
+        interval 12h
+        timeout 15s
+    }
+
 }
 
 import sites-enabled/*
