@@ -1,12 +1,20 @@
 # Default Caddyfile
 {
-	email support@it-dw.com
-	acme_ca https://acme.itdw.cloud/private/directory
-	admin 0.0.0.0:2019
-	log {
-		level INFO
-		output stdout
-	}
+    email support@it-dw.com
+    acme_ca https://acme.itdw.cloud/private/directory
+    admin 0.0.0.0:2019
+
+    log {
+        level INFO
+        output stdout
+    }
+
+    servers {
+        trusted_proxies bunny {
+            interval 12h
+            timeout 15s
+        }
+    }
 }
 
 import sites-enabled/*
