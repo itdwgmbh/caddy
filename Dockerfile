@@ -1,49 +1,27 @@
-# Multi-stage build for optimal size and build speed
-# Using golang:alpine automatically gets the latest stable Go version
-FROM crvp-nbg1-01.itinfra.cloud/docker/library/golang:alpine AS builder
+FROM crvp-nbg1-01.itinfra.cloud/dhi/golang:1.26 AS builder
 
-# Install build dependencies
-RUN apk add --no-cache git ca-certificates tzdata
-
-# Set working directory
 WORKDIR /src
 
-# Install xcaddy for building custom Caddy
 RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
 
-# Build Caddy with custom modules
 RUN xcaddy build \
     --with github.com/digilolnet/caddy-bunny-ip
 
-# Final stage - Alpine for minimal size with shell access
-FROM crvp-nbg1-01.itinfra.cloud/docker/library/alpine:latest
+RUN printf 'package main\nimport ("net/http"; "os"; "time")\nfunc main() { c := &http.Client{Timeout: 2 * time.Second}; r, err := c.Get("http://localhost:2019/config/"); if err != nil || r.StatusCode != 200 { os.Exit(1) } }\n' > /tmp/healthcheck.go && \
+    go build -o /tmp/healthcheck /tmp/healthcheck.go
 
-# Install runtime dependencies
-RUN apk add --no-cache ca-certificates tzdata curl
+FROM crvp-nbg1-01.itinfra.cloud/dhi/debian-base:trixie
 
-# Copy binary from builder stage
-COPY --from=builder /src/caddy /usr/bin/caddy
+COPY --from=builder --chown=1000:1000 /src/caddy /usr/bin/caddy
+COPY --from=builder --chown=1000:1000 /tmp/healthcheck /usr/local/bin/healthcheck
 
-# Copy default Caddyfile
-COPY Caddyfile /etc/caddy/Caddyfile
-
-# Copy and set up entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-# Expose standard ports (root user can bind to privileged ports)
 EXPOSE 80 443 2019
 
-# Health check using admin API
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD ["curl", "-sf", "http://localhost:2019/config/"]
+ENV TZ=Europe/Berlin \
+    XDG_DATA_HOME=/data \
+    XDG_CONFIG_HOME=/config
 
-# Entrypoint formats Caddyfile before starting
-ENTRYPOINT ["/entrypoint.sh"]
+HEALTHCHECK --interval=5s --timeout=10s --start-period=15s --retries=12 \
+    CMD ["healthcheck"]
 
-# Set ENV for Caddy
-ENV XDG_DATA_HOME=/data
-ENV XDG_CONFIG_HOME=/config
-
-# Default command - configured for unprivileged ports
 CMD ["/usr/bin/caddy", "run", "--config", "/etc/caddy/Caddyfile"]
