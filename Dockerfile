@@ -14,6 +14,7 @@ FROM crvp-nbg1-01.itinfra.cloud/dhi/debian-base:trixie
 
 COPY --from=builder --chown=1000:1000 /src/caddy /usr/bin/caddy
 COPY --from=builder --chown=1000:1000 /tmp/healthcheck /usr/local/bin/healthcheck
+COPY --chown=1000:1000 Caddyfile /etc/caddy/Caddyfile
 
 EXPOSE 80 443 2019
 
