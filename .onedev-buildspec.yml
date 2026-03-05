@@ -47,3 +47,7 @@ jobs:
   maxRetries: 3
   retryDelay: 30
   timeout: 14400
+  postBuildActions:
+  - type: SendNotificationAction
+    condition: failed
+    receivers: user(xw77d)
