@@ -1,4 +1,4 @@
-FROM crvp-nbg1-01.itinfra.cloud/dhi/golang:1.26 AS builder
+FROM golang:1.26 AS builder
 
 WORKDIR /src
 
@@ -10,7 +10,7 @@ RUN xcaddy build \
 RUN printf 'package main\nimport ("net/http"; "os"; "time")\nfunc main() { c := &http.Client{Timeout: 2 * time.Second}; r, err := c.Get("http://localhost:2019/config/"); if err != nil || r.StatusCode != 200 { os.Exit(1) } }\n' > /tmp/healthcheck.go && \
     go build -o /tmp/healthcheck /tmp/healthcheck.go
 
-FROM crvp-nbg1-01.itinfra.cloud/dhi/debian-base:trixie
+FROM debian:trixie-slim
 
 COPY --from=builder --chown=1000:1000 /src/caddy /usr/bin/caddy
 COPY --from=builder --chown=1000:1000 /tmp/healthcheck /usr/local/bin/healthcheck
