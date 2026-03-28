@@ -1,19 +1,11 @@
-FROM golang:1.26 AS builder
-
-WORKDIR /src
-
-RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
-
-RUN xcaddy build \
-    --with github.com/digilolnet/caddy-bunny-ip
-
-RUN printf 'package main\nimport ("net/http"; "os"; "time")\nfunc main() { c := &http.Client{Timeout: 2 * time.Second}; r, err := c.Get("http://localhost:2019/config/"); if err != nil || r.StatusCode != 200 { os.Exit(1) } }\n' > /tmp/healthcheck.go && \
-    go build -o /tmp/healthcheck /tmp/healthcheck.go
-
 FROM debian:trixie-slim
 
-COPY --from=builder --chown=1000:1000 /src/caddy /usr/bin/caddy
-COPY --from=builder --chown=1000:1000 /tmp/healthcheck /usr/local/bin/healthcheck
+ARG TARGETARCH
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates tzdata && rm -rf /var/lib/apt/lists/*
+
+COPY --chown=1000:1000 caddy-linux-${TARGETARCH} /usr/bin/caddy
+COPY --chown=1000:1000 healthcheck /usr/local/bin/healthcheck
 COPY --chown=1000:1000 Caddyfile /etc/caddy/Caddyfile
 
 EXPOSE 80 443 2019
