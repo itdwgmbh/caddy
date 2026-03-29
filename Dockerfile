@@ -1,8 +1,8 @@
-FROM debian:trixie-slim
+FROM alpine:3.23
 
 ARG TARGETARCH
 
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates tzdata && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache ca-certificates tzdata
 
 COPY --chown=1000:1000 caddy-linux-${TARGETARCH} /usr/bin/caddy
 COPY --chown=1000:1000 healthcheck /usr/local/bin/healthcheck
