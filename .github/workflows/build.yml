@@ -42,6 +42,14 @@ jobs:
           version: latest
           use-cache: 'true'
 
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: itdwgmbh
+
       - name: Checkout repository
         uses: actions/checkout@v6
 
@@ -60,18 +68,28 @@ jobs:
           printf 'package main\nimport ("net/http"; "os"; "time")\nfunc main() { c := &http.Client{Timeout: 2 * time.Second}; r, err := c.Get("http://localhost:2019/config/"); if err != nil || r.StatusCode != 200 { os.Exit(1) } }\n' > /tmp/healthcheck.go
           go build -o healthcheck /tmp/healthcheck.go
 
+      - name: Configure private Go modules
+        env:
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git config --global url."https://x-access-token:${APP_TOKEN}@github.com/".insteadOf "https://github.com/"
+
       - name: Cross-compile Caddy binaries
         env:
           CADDY_VERSION: ${{ needs.get-version.outputs.version }}
+          GOPRIVATE: github.com/itdwgmbh/*
+          GONOSUMDB: github.com/itdwgmbh/*
         run: |
           # Build for amd64
           GOOS=linux GOARCH=amd64 xcaddy build ${CADDY_VERSION} \
-            --with github.com/digilolnet/caddy-bunny-ip
+            --with github.com/digilolnet/caddy-bunny-ip \
+            --with github.com/itdwgmbh/caddy-dns-itdw
           mv caddy caddy-linux-amd64
-          
+
           # Build for arm64
           GOOS=linux GOARCH=arm64 xcaddy build ${CADDY_VERSION} \
-            --with github.com/digilolnet/caddy-bunny-ip
+            --with github.com/digilolnet/caddy-bunny-ip \
+            --with github.com/itdwgmbh/caddy-dns-itdw
           mv caddy caddy-linux-arm64
 
       - name: Set up QEMU
