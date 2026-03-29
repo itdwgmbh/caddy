@@ -84,14 +84,16 @@ jobs:
           GOOS=linux GOARCH=amd64 xcaddy build ${CADDY_VERSION} \
             --with github.com/digilolnet/caddy-bunny-ip \
             --with github.com/itdwgmbh/caddy-dns-itdw \
-            --with github.com/itdwgmbh/caddy-autodns
+            --with github.com/itdwgmbh/caddy-autodns \
+            --with github.com/mholt/caddy-ratelimit
           mv caddy caddy-linux-amd64
 
           # Build for arm64
           GOOS=linux GOARCH=arm64 xcaddy build ${CADDY_VERSION} \
             --with github.com/digilolnet/caddy-bunny-ip \
             --with github.com/itdwgmbh/caddy-dns-itdw \
-            --with github.com/itdwgmbh/caddy-autodns
+            --with github.com/itdwgmbh/caddy-autodns \
+            --with github.com/mholt/caddy-ratelimit
           mv caddy caddy-linux-arm64
 
       - name: Set up QEMU
