@@ -1,77 +1,149 @@
-# Caddy Builder
+# Caddy (IT-DW)
 
-Internal build pipeline for custom Caddy Docker images.
+Custom Caddy build with DNS providers, CDN IP validation, and rate limiting.
 
-## Overview
+Images are published to `ghcr.io/itdwgmbh/caddy` for linux/amd64 and linux/arm64.
 
-This repository builds Caddy with the following plugins:
-- [`caddy-bunny-ip`](https://github.com/digilolnet/caddy-bunny-ip) - Bunny CDN IP validation
+## Included Modules
 
-Images are built monthly and pushed to the internal container registry with multi-architecture support (linux/amd64 and linux/arm64).
+### caddy-bunny-ip
 
-## Features
-
-- Multi-stage builds with Alpine base image
-- Automated monthly builds
-- Multi-platform support (AMD64 and ARM64)
-- Default configuration redirects all traffic to https://it-dw.com
-- Health checks via Caddy admin API
-
-## Usage
-
-### Running the Container
-
-With default configuration (redirects to https://it-dw.com):
-```bash
-docker run -d \
-  -p 80:80 \
-  -p 443:443 \
-  ${ITDW_CONTAINER_REGISTRY_SERVER}/library/caddy:latest
-```
-
-With custom Caddyfile:
-```bash
-docker run -d \
-  -p 80:80 \
-  -p 443:443 \
-  -v /path/to/Caddyfile:/etc/caddy/Caddyfile:ro \
-  -v /path/to/data:/data \
-  -v /path/to/config:/config \
-  ${ITDW_CONTAINER_REGISTRY_SERVER}/library/caddy:latest
-```
-
-### Example Caddyfile
+Validates that requests originate from [Bunny CDN](https://bunny.net) IP ranges. Used when Caddy sits behind Bunny as a pull zone to restore the real client IP.
 
 ```caddyfile
 {
-    # Global options
-    email admin@example.com
-}
-
-example.com {
-    # Bunny CDN IP validation
-    route {
-        bunny_ip {
-            # Your Bunny IP configuration
+    servers {
+        trusted_proxies bunny {
+            interval 12h
+            timeout 15s
         }
     }
-
-    # Your site configuration
-    reverse_proxy localhost:8080
 }
 ```
 
-### Docker Compose Example
+### caddy-dns-itdw
+
+DNS provider for ACME DNS-01 challenges via the IT-DW API. Authenticates with TailID JWT tokens over Tailscale — no API keys needed.
+
+```caddyfile
+# Global — all sites use IT-DW DNS for certificates
+{
+    acme_dns itdw
+}
+
+# Per-site
+example.com {
+    tls {
+        dns itdw
+    }
+}
+
+# With optional URL overrides
+example.com {
+    tls {
+        dns itdw {
+            api_url    https://api.tailc6b0d.ts.net
+            tailid_url https://tailid.tailc6b0d.ts.net
+        }
+    }
+}
+```
+
+Requires the Caddy instance to be on the Tailscale network.
+
+### caddy-autodns
+
+DNS provider for ACME DNS-01 challenges via the [AutoDNS](https://www.autodns.com) API (InterNetX). Context defaults to `8026211`.
+
+```caddyfile
+# Global
+{
+    acme_dns autodns {
+        username {env.AUTODNS_USER}
+        password {env.AUTODNS_PASS}
+    }
+}
+
+# Per-site
+example.com {
+    tls {
+        dns autodns {
+            username {env.AUTODNS_USER}
+            password {env.AUTODNS_PASS}
+        }
+    }
+}
+
+# All options
+example.com {
+    tls {
+        dns autodns {
+            username {env.AUTODNS_USER}
+            password {env.AUTODNS_PASS}
+            endpoint https://api.autodns.com/v1
+            context  8026211
+        }
+    }
+}
+```
+
+### caddy-ratelimit
+
+HTTP rate limiting with sliding window. Supports multiple zones, request matchers, and CIDR-based key grouping for IPv6.
+
+```caddyfile
+# Basic — limit per client IP
+rate_limit {
+    zone per_ip {
+        key    {remote_host}
+        events 100
+        window 1m
+    }
+}
+
+# With IPv6 /64 grouping — all IPs in the same prefix share one limiter
+rate_limit {
+    zone per_network {
+        key             {remote_host}
+        events          200
+        window          1m
+        ipv6_prefix_len 64
+        ipv4_prefix_len 24
+    }
+}
+
+# Multiple zones with request matchers
+rate_limit {
+    zone api {
+        key    {remote_host}
+        events 60
+        window 1m
+        match {
+            path /api/*
+        }
+    }
+    zone global {
+        key    {remote_host}
+        events 300
+        window 1m
+    }
+}
+```
+
+## Running
+
+### Docker Compose
 
 ```yaml
 services:
   caddy:
-    image: ${ITDW_CONTAINER_REGISTRY_SERVER}/library/caddy:latest
+    image: ghcr.io/itdwgmbh/caddy:latest
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./sites-enabled:/etc/caddy/sites-enabled:ro
       - caddy_data:/data
       - caddy_config:/config
     restart: unless-stopped
@@ -81,34 +153,34 @@ volumes:
   caddy_config:
 ```
 
-## Build Process
+### Default Caddyfile
 
-1. Builds Caddy with xcaddy including the specified plugins
-2. Creates a minimal Alpine-based image with curl for health checks
+The built-in Caddyfile uses the IT-DW private ACME CA, Bunny CDN trusted proxies, and imports from `sites-enabled/`:
 
-## CI/CD
+```caddyfile
+{
+    email support@it-dw.com
+    acme_ca https://acme.tailc6b0d.ts.net/private/directory
+    admin 0.0.0.0:2019
 
-GitHub Actions workflow triggers:
-- Manual trigger
-- Monthly on the 15th at 12:21 UTC
-- Push to main branch
+    log {
+        level INFO
+        output stdout
+    }
 
-Images are tagged with:
-- `latest` - Most recent build
-- Caddy version (e.g., `v2.9.1`)
+    servers {
+        trusted_proxies bunny {
+            interval 12h
+            timeout 15s
+        }
+    }
+}
 
-The workflow connects to the internal network via Tailscale before pushing to the registry.
+import sites-enabled/*
+```
 
-### Required GitHub Secrets
+## Build
 
-- `ITDW_CONTAINER_REGISTRY_SERVER`
-- `ITDW_CONTAINER_REGISTRY_USER`
-- `ITDW_CONTAINER_REGISTRY_PASSWORD`
-- `TS_OAUTH_CLIENT_ID`
-- `TS_OAUTH_SECRET`
+Images are built automatically on push to main, monthly on the 10th, and on manual trigger. Both amd64 and arm64 are cross-compiled with xcaddy and packaged in an Alpine 3.23 image.
 
-### Ports
-
-- `80` - HTTP
-- `443` - HTTPS
-- `2019` - Admin API (health checks)
+Tagged as `latest`, the upstream Caddy version (e.g. `v2.11.2`), and the git SHA.
