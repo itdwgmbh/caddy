@@ -1,6 +1,6 @@
 # Caddy (IT-DW)
 
-Custom Caddy build with DNS providers, CDN IP validation, and rate limiting.
+Custom Caddy build with DNS providers, CDN IP validation, rate limiting, and S3 proxy.
 
 Images are published to `ghcr.io/itdwgmbh/caddy` for linux/amd64 and linux/arm64.
 
@@ -126,6 +126,36 @@ rate_limit {
         key    {remote_host}
         events 300
         window 1m
+    }
+}
+```
+
+### caddy-s3proxy
+
+Serves static content from S3-compatible storage (Hetzner Object Storage, Infomaniak) with AWS Signature V4 authentication. Supports Range requests for video/large files.
+
+```caddyfile
+# Serve a static site from Hetzner Object Storage
+docs.example.com {
+    s3proxy {
+        endpoint   https://fsn1.your-objectstorage.com
+        bucket     docs-site
+        region     fsn1
+        access_key {env.S3_ACCESS_KEY}
+        secret_key {env.S3_SECRET_KEY}
+    }
+}
+
+# Serve assets from a subfolder in the bucket
+assets.example.com {
+    s3proxy {
+        endpoint   https://s3.pub1.infomaniak.cloud
+        bucket     my-assets
+        region     dc3-a
+        access_key {env.S3_ACCESS_KEY}
+        secret_key {env.S3_SECRET_KEY}
+        root       public/assets
+        index      index.html
     }
 }
 ```

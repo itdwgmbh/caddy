@@ -85,7 +85,8 @@ jobs:
             --with github.com/digilolnet/caddy-bunny-ip \
             --with github.com/itdwgmbh/caddy-dns-itdw \
             --with github.com/itdwgmbh/caddy-autodns \
-            --with github.com/itdwgmbh/caddy-ratelimit
+            --with github.com/itdwgmbh/caddy-ratelimit \
+            --with github.com/itdwgmbh/caddy-s3proxy
           mv caddy caddy-linux-amd64
 
           # Build for arm64
@@ -93,7 +94,8 @@ jobs:
             --with github.com/digilolnet/caddy-bunny-ip \
             --with github.com/itdwgmbh/caddy-dns-itdw \
             --with github.com/itdwgmbh/caddy-autodns \
-            --with github.com/itdwgmbh/caddy-ratelimit
+            --with github.com/itdwgmbh/caddy-ratelimit \
+            --with github.com/itdwgmbh/caddy-s3proxy
           mv caddy caddy-linux-arm64
 
       - name: Set up QEMU
