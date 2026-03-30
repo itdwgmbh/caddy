@@ -158,7 +158,30 @@ assets.example.com {
         index      index.html
     }
 }
+
+# Browse bucket contents with directory listing
+files.example.com {
+    s3proxy {
+        endpoint   https://fsn1.your-objectstorage.com
+        bucket     shared-files
+        region     fsn1
+        access_key {env.S3_ACCESS_KEY}
+        secret_key {env.S3_SECRET_KEY}
+        browse
+    }
+}
 ```
+
+| Parameter    | Required | Default      | Description                                              |
+|--------------|----------|--------------|----------------------------------------------------------|
+| `endpoint`   | yes      |              | S3-compatible endpoint URL                               |
+| `bucket`     | yes      |              | Bucket name                                              |
+| `region`     | no       | `auto`       | Bucket region                                            |
+| `access_key` | yes      |              | S3 access key (supports `{env.*}` placeholders)          |
+| `secret_key` | yes      |              | S3 secret key (supports `{env.*}` placeholders)          |
+| `root`       | no       |              | Prefix prepended to all object keys                      |
+| `index`      | no       | `index.html` | File served for directory requests                       |
+| `browse`     | no       | `false`      | Show directory listing when index file is not found      |
 
 ## Running
 
