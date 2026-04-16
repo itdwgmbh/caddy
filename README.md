@@ -1,6 +1,6 @@
 # Caddy (IT-DW)
 
-Custom Caddy build with DNS providers, CDN IP validation, rate limiting, and S3 proxy.
+Custom Caddy build with DNS providers, CDN IP validation, rate limiting, S3 proxy, and tailnet identity.
 
 Images are published to `ghcr.io/itdwgmbh/caddy` for linux/amd64 and linux/arm64.
 
@@ -182,6 +182,46 @@ files.example.com {
 | `root`       | no       |              | Prefix prepended to all object keys                      |
 | `index`      | no       | `index.html` | File served for directory requests                       |
 | `browse`     | no       | `false`      | Show directory listing when index file is not found      |
+
+### caddy-tailnet-identity
+
+HTTP middleware that authenticates incoming requests against the local `tailscaled` socket and injects identity + capability headers for downstream handlers. Returns `401 Unauthorized` when the source IP can't be resolved to a tailnet node — useful for protecting internal services without per-service auth.
+
+```caddyfile
+example.com {
+    tailnet_identity
+    reverse_proxy http://backend:8080
+}
+
+# With explicit socket path
+example.com {
+    tailnet_identity {
+        socket /var/run/tailscale/tailscaled.sock
+    }
+    reverse_proxy http://backend:8080
+}
+```
+
+Headers injected (overwriting any client-supplied values):
+
+| Header                      | Source                                                  | When                                                           |
+|-----------------------------|---------------------------------------------------------|----------------------------------------------------------------|
+| `Tailscale-Node-ID`         | `whois.Node.StableID`                                   | always                                                         |
+| `Tailscale-Node-Name`       | `whois.Node.ComputedName`                               | always                                                         |
+| `Tailscale-Node-Tags`       | comma-joined `whois.Node.Tags`                          | when non-empty (else deleted)                                  |
+| `Tailscale-User-Login`      | `whois.UserProfile.LoginName`                           | when caller is a user-owned device (else all `User-*` deleted) |
+| `Tailscale-User-Name`       | `whois.UserProfile.DisplayName`                         | same                                                           |
+| `Tailscale-User-ProfilePic` | `whois.UserProfile.ProfilePicURL`                       | same                                                           |
+| `Tailscale-Caps`            | `whois.CapMap` as JSON object (original keys preserved) | when non-empty (else deleted)                                  |
+
+The Caddy container must have the host's `tailscaled` socket mounted:
+
+```yaml
+volumes:
+  - /var/run/tailscale/tailscaled.sock:/var/run/tailscale/tailscaled.sock:ro
+```
+
+Authz pattern: backends read `Tailscale-Caps`, `json.Unmarshal` into `map[string]json.RawMessage`, and look up their own cap key (e.g. `"itdw.cloud/cap/mcp/easybill"`). Cap grants are sourced from the Tailscale ACL `grants` block — single source of truth, no per-service authz table.
 
 ## Running
 
