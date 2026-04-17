@@ -60,13 +60,19 @@ jobs:
         run: |
           git config --global url."https://x-access-token:${APP_TOKEN}@github.com/".insteadOf "https://github.com/"
 
+      - name: Install xcaddy
+        # `go tool xcaddy` rebuilds xcaddy under the caller's GOOS/GOARCH, which
+        # breaks the cross-compile loop below. Install a host-native binary
+        # once from the version pinned in go.mod (Dependabot still updates it).
+        run: go install github.com/caddyserver/xcaddy/cmd/xcaddy
+
       - name: Cross-compile Caddy binaries
         env:
           CADDY_VERSION: ${{ needs.get-version.outputs.version }}
           GOPRIVATE: github.com/itdwgmbh/*
         run: |
           for arch in amd64 arm64; do
-            GOOS=linux GOARCH=${arch} go tool xcaddy build ${CADDY_VERSION} \
+            GOOS=linux GOARCH=${arch} xcaddy build ${CADDY_VERSION} \
               --with github.com/digilolnet/caddy-bunny-ip \
               --with github.com/itdwgmbh/caddy-dns-itdw \
               --with github.com/itdwgmbh/caddy-ratelimit \
