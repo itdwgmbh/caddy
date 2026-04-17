@@ -40,5 +40,5 @@ vendor/
 .dockerignore
 docker-compose.override.yml
 # Local go build artifact
-healthcheck
-healthcheck-*
+/healthcheck
+/healthcheck-*
