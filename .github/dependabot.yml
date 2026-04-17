@@ -20,3 +20,13 @@ updates:
       docker:
         patterns:
           - "*"
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 5
+    groups:
+      gomod:
+        patterns:
+          - "*"

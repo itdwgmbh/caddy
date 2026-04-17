@@ -51,42 +51,6 @@ example.com {
 
 Requires the Caddy instance to be on the Tailscale network.
 
-### caddy-autodns
-
-DNS provider for ACME DNS-01 challenges via the [AutoDNS](https://www.autodns.com) API (InterNetX). Context defaults to `8026211`.
-
-```caddyfile
-# Global
-{
-    acme_dns autodns {
-        username {env.AUTODNS_USER}
-        password {env.AUTODNS_PASS}
-    }
-}
-
-# Per-site
-example.com {
-    tls {
-        dns autodns {
-            username {env.AUTODNS_USER}
-            password {env.AUTODNS_PASS}
-        }
-    }
-}
-
-# All options
-example.com {
-    tls {
-        dns autodns {
-            username {env.AUTODNS_USER}
-            password {env.AUTODNS_PASS}
-            endpoint https://api.autodns.com/v1
-            context  8026211
-        }
-    }
-}
-```
-
 ### caddy-ratelimit
 
 HTTP rate limiting with sliding window. Supports multiple zones, request matchers, and CIDR-based key grouping for IPv6.
@@ -253,12 +217,13 @@ The built-in Caddyfile uses the IT-DW private ACME CA, Bunny CDN trusted proxies
 ```caddyfile
 {
     email support@it-dw.com
-    acme_ca https://acme.tailc6b0d.ts.net/private/directory
+    acme_ca https://acme.itinfra.cloud/directory
     admin 0.0.0.0:2019
 
     log {
         level INFO
         output stdout
+        exclude admin.api
     }
 
     servers {

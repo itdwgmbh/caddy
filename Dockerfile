@@ -5,7 +5,7 @@ ARG TARGETARCH
 RUN apk add --no-cache ca-certificates tzdata
 
 COPY --chown=1000:1000 caddy-linux-${TARGETARCH} /usr/bin/caddy
-COPY --chown=1000:1000 healthcheck /usr/local/bin/healthcheck
+COPY --chown=1000:1000 healthcheck-${TARGETARCH} /usr/local/bin/healthcheck
 COPY --chown=1000:1000 Caddyfile /etc/caddy/Caddyfile
 
 EXPOSE 80 443 2019
