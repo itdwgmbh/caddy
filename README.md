@@ -168,15 +168,14 @@ example.com {
 
 Headers injected (overwriting any client-supplied values):
 
-| Header                      | Source                                                  | When                                                           |
-|-----------------------------|---------------------------------------------------------|----------------------------------------------------------------|
-| `Tailscale-Node-ID`         | `whois.Node.StableID`                                   | always                                                         |
-| `Tailscale-Node-Name`       | `whois.Node.ComputedName`                               | always                                                         |
-| `Tailscale-Node-Tags`       | comma-joined `whois.Node.Tags`                          | when non-empty (else deleted)                                  |
-| `Tailscale-User-Login`      | `whois.UserProfile.LoginName`                           | when caller is a user-owned device (else all `User-*` deleted) |
-| `Tailscale-User-Name`       | `whois.UserProfile.DisplayName`                         | same                                                           |
-| `Tailscale-User-ProfilePic` | `whois.UserProfile.ProfilePicURL`                       | same                                                           |
-| `Tailscale-Caps`            | `whois.CapMap` as JSON object (original keys preserved) | when non-empty (else deleted)                                  |
+| Header                 | Source                                                                          | When                                                           |
+|------------------------|---------------------------------------------------------------------------------|----------------------------------------------------------------|
+| `Tailscale-Node-ID`    | `whois.Node.StableID`                                                           | always                                                         |
+| `Tailscale-Node-Name`  | `whois.Node.ComputedName`                                                       | always                                                         |
+| `Tailscale-Node-Tags`  | comma-joined `whois.Node.Tags`                                                  | when non-empty (else deleted)                                  |
+| `Tailscale-User-Login` | `whois.UserProfile.LoginName`                                                   | when caller is a user-owned device (else all `User-*` deleted) |
+| `Tailscale-User-Name`  | `whois.UserProfile.DisplayName`                                                 | same                                                           |
+| `Tailscale-Caps`       | `whois.CapMap` as single-line (compacted) JSON object (original keys preserved) | when non-empty (else deleted)                                  |
 
 The Caddy container must have the host's `tailscaled` socket mounted:
 
@@ -216,22 +215,22 @@ The built-in Caddyfile uses the IT-DW private ACME CA, Bunny CDN trusted proxies
 
 ```caddyfile
 {
-    email support@it-dw.com
-    acme_ca https://acme.itinfra.cloud/directory
-    admin 0.0.0.0:2019
+	email support@it-dw.com
+	acme_ca https://acme.itinfra.cloud/directory
+	admin 0.0.0.0:2019
 
-    log {
-        level INFO
-        output stdout
-        exclude admin.api
-    }
+	log {
+		level INFO
+		output stdout
+		exclude admin.api
+	}
 
-    servers {
-        trusted_proxies bunny {
-            interval 12h
-            timeout 15s
-        }
-    }
+	servers {
+		trusted_proxies bunny {
+			interval 12h
+			timeout 15s
+		}
+	}
 }
 
 import sites-enabled/*
