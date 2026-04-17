@@ -81,9 +81,10 @@ jobs:
             mv caddy caddy-linux-${arch}
           done
 
-      - name: Verify Caddyfile is formatted
-        # caddy fmt --diff exits 0 even with differences, so compare directly.
-        run: diff -u Caddyfile <(./caddy-linux-amd64 fmt Caddyfile)
+      - name: Format Caddyfile baked into the image
+        # Cosmetic; avoids fmt warnings at container startup regardless of
+        # what's committed to the repo.
+        run: ./caddy-linux-amd64 fmt --overwrite Caddyfile
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
