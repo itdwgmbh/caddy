@@ -9,13 +9,6 @@
 		output stdout
 		exclude admin.api
 	}
-
-	servers {
-		trusted_proxies bunny {
-			interval 12h
-			timeout 15s
-		}
-	}
 }
 
 import sites-enabled/*

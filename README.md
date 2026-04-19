@@ -1,25 +1,10 @@
 # Caddy (IT-DW)
 
-Custom Caddy build with DNS providers, CDN IP validation, rate limiting, S3 proxy, and tailnet identity.
+Custom Caddy build with DNS providers, rate limiting, S3 proxy, and tailnet identity.
 
 Images are published to `ghcr.io/itdwgmbh/caddy` for linux/amd64 and linux/arm64.
 
 ## Included Modules
-
-### caddy-bunny-ip
-
-Validates that requests originate from [Bunny CDN](https://bunny.net) IP ranges. Used when Caddy sits behind Bunny as a pull zone to restore the real client IP.
-
-```caddyfile
-{
-    servers {
-        trusted_proxies bunny {
-            interval 12h
-            timeout 15s
-        }
-    }
-}
-```
 
 ### caddy-dns-itdw
 
@@ -211,7 +196,7 @@ volumes:
 
 ### Default Caddyfile
 
-The built-in Caddyfile uses the IT-DW private ACME CA, Bunny CDN trusted proxies, and imports from `sites-enabled/`:
+The built-in Caddyfile uses the IT-DW private ACME CA and imports from `sites-enabled/`:
 
 ```caddyfile
 {
@@ -223,13 +208,6 @@ The built-in Caddyfile uses the IT-DW private ACME CA, Bunny CDN trusted proxies
 		level INFO
 		output stdout
 		exclude admin.api
-	}
-
-	servers {
-		trusted_proxies bunny {
-			interval 12h
-			timeout 15s
-		}
 	}
 }
 
