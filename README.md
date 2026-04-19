@@ -151,16 +151,20 @@ example.com {
 }
 ```
 
-Headers injected (overwriting any client-supplied values):
+Every managed header is scrubbed from the incoming request unconditionally before authentication runs, so a client cannot pre-set them to spoof identity. On a successful whois, a subset is then repopulated:
 
-| Header                 | Source                                                                          | When                                                           |
-|------------------------|---------------------------------------------------------------------------------|----------------------------------------------------------------|
-| `Tailscale-Node-ID`    | `whois.Node.StableID`                                                           | always                                                         |
-| `Tailscale-Node-Name`  | `whois.Node.ComputedName`                                                       | always                                                         |
-| `Tailscale-Node-Tags`  | comma-joined `whois.Node.Tags`                                                  | when non-empty (else deleted)                                  |
-| `Tailscale-User-Login` | `whois.UserProfile.LoginName`                                                   | when caller is a user-owned device (else all `User-*` deleted) |
-| `Tailscale-User-Name`  | `whois.UserProfile.DisplayName`                                                 | same                                                           |
-| `Tailscale-Caps`       | `whois.CapMap` as single-line (compacted) JSON object (original keys preserved) | when non-empty (else deleted)                                  |
+| Header                 | Source                                                                          | When                                     |
+|------------------------|---------------------------------------------------------------------------------|------------------------------------------|
+| `Tailscale-Node-ID`    | `whois.Node.StableID`                                                           | always                                   |
+| `Tailscale-Node-Name`  | `whois.Node.ComputedName`                                                       | always                                   |
+| `Tailscale-Node-Tags`  | comma-joined `whois.Node.Tags`                                                  | when non-empty                           |
+| `Tailscale-User-Login` | `whois.UserProfile.LoginName`                                                   | when caller is a user-owned device       |
+| `Tailscale-User-Name`  | `whois.UserProfile.DisplayName`                                                 | same                                     |
+| `Tailscale-Caps`       | `whois.CapMap` as single-line (compacted) JSON object (original keys preserved) | when non-empty                           |
+| `Remote-User`          | alias of `Tailscale-User-Login`                                                 | same                                     |
+| `Remote-Name`          | alias of `Tailscale-User-Name`                                                  | same                                     |
+
+`Remote-User` / `Remote-Name` follow the forward-auth header convention used by Authelia, Authentik, Grafana `auth.proxy`, Jellyfin, etc., so apps that already speak that dialect work without Tailscale-specific config.
 
 The Caddy container must have the host's `tailscaled` socket mounted:
 
