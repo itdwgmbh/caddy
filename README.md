@@ -8,7 +8,7 @@ Images are published to `ghcr.io/itdwgmbh/caddy` for linux/amd64 and linux/arm64
 
 ### caddy-dns-itdw
 
-DNS provider for ACME DNS-01 challenges via the IT-DW API. Authenticates with TailID JWT tokens over Tailscale — no API keys needed.
+DNS provider for ACME DNS-01 challenges via the IT-DW API. Authenticates over Tailscale — no API keys needed.
 
 ```caddyfile
 # Global — all sites use IT-DW DNS for certificates
@@ -23,12 +23,11 @@ example.com {
     }
 }
 
-# With optional URL overrides
+# With optional URL override
 example.com {
     tls {
         dns itdw {
-            api_url    https://api.tailc6b0d.ts.net
-            tailid_url https://tailid.tailc6b0d.ts.net
+            api_url    https://apvp-001.tailc6b0d.ts.net
         }
     }
 }
