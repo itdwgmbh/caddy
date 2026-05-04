@@ -9,6 +9,13 @@ on:
     - cron: '0 15 10 * *'  # Monthly on the 10th at 15:00 UTC
   workflow_dispatch:
 
+# Coalesce builds: a burst of plugin merges firing workflow_dispatch
+# collapses into one run, which is fine because xcaddy resolves every
+# plugin's main fresh anyway — the latest run always sees all updates.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   IMAGE_NAME: ${{ github.repository }}
 
