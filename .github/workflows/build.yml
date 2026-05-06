@@ -56,10 +56,14 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Build healthcheck binary
+      - name: Build sidecar binaries
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o healthcheck-amd64 ./cmd/healthcheck
-          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags='-s -w' -o healthcheck-arm64 ./cmd/healthcheck
+          for arch in amd64 arm64; do
+            for bin in healthcheck cert-sanity; do
+              CGO_ENABLED=0 GOOS=linux GOARCH=${arch} go build -trimpath -ldflags='-s -w' \
+                -o ${bin}-${arch} ./cmd/${bin}
+            done
+          done
 
       - name: Configure private Go modules
         env:

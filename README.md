@@ -217,6 +217,18 @@ The built-in Caddyfile uses the IT-DW private ACME CA and imports from `sites-en
 import sites-enabled/*
 ```
 
+## Pre-start cert sanity sweep
+
+Caddy refuses to load a certificate whose stored public key doesn't match the
+private key (`tls: private key does not match public key`) and the only
+recovery is wiping the broken pair. The image's entrypoint runs `cert-sanity`
+before `caddy run`, which walks `/data/caddy/certificates/*/*/<domain>.crt`,
+compares each cert's public key to the matching `.key`, and removes any
+`crt`/`key`/`json` triple that fails the check. Caddy then reissues on
+startup instead of failing closed.
+
+Override the storage root (for tests) with `CADDY_CERT_ROOT`.
+
 ## Build
 
 Images are built automatically on push to main, monthly on the 10th, and on manual trigger. Both amd64 and arm64 are cross-compiled with xcaddy and packaged in an Alpine 3.23 image.
