@@ -131,48 +131,19 @@ files.example.com {
 | `index`      | no       | `index.html` | File served for directory requests                       |
 | `browse`     | no       | `false`      | Show directory listing when index file is not found      |
 
-### caddy-tailnet-identity
+## Tailnet-only access
 
-HTTP middleware that authenticates incoming requests against the local `tailscaled` socket and injects identity + capability headers for downstream handlers. Returns `401 Unauthorized` when the source IP can't be resolved to a tailnet node — useful for protecting internal services without per-service auth.
+For internal services that must only be reachable over Tailscale, use Caddy's built-in `remote_ip` matcher — no custom plugin needed. The matcher tests `RemoteAddr` directly, so it is not fooled by an `X-Forwarded-For` rewrite from `trusted_proxies`:
 
 ```caddyfile
-example.com {
-    tailnet_identity
-    reverse_proxy http://backend:8080
-}
-
-# With explicit socket path
-example.com {
-    tailnet_identity {
-        socket /var/run/tailscale/tailscaled.sock
-    }
+internal.example {
+    @not_tailnet not remote_ip 100.64.0.0/10 fd7a:115c:a1e0::/48
+    respond @not_tailnet 403
     reverse_proxy http://backend:8080
 }
 ```
 
-Every managed header is scrubbed from the incoming request unconditionally before authentication runs, so a client cannot pre-set them to spoof identity. On a successful whois, a subset is then repopulated:
-
-| Header                 | Source                                                                          | When                                     |
-|------------------------|---------------------------------------------------------------------------------|------------------------------------------|
-| `Tailscale-Node-ID`    | `whois.Node.StableID`                                                           | always                                   |
-| `Tailscale-Node-Name`  | `whois.Node.ComputedName`                                                       | always                                   |
-| `Tailscale-Node-Tags`  | comma-joined `whois.Node.Tags`                                                  | when non-empty                           |
-| `Tailscale-User-Login` | `whois.UserProfile.LoginName`                                                   | when caller is a user-owned device       |
-| `Tailscale-User-Name`  | `whois.UserProfile.DisplayName`                                                 | same                                     |
-| `Tailscale-Caps`       | `whois.CapMap` as single-line (compacted) JSON object (original keys preserved) | when non-empty                           |
-| `Remote-User`          | alias of `Tailscale-User-Login`                                                 | same                                     |
-| `Remote-Name`          | alias of `Tailscale-User-Name`                                                  | same                                     |
-
-`Remote-User` / `Remote-Name` follow the forward-auth header convention used by Authelia, Authentik, Grafana `auth.proxy`, Jellyfin, etc., so apps that already speak that dialect work without Tailscale-specific config.
-
-The Caddy container must have the host's `tailscaled` socket mounted:
-
-```yaml
-volumes:
-  - /var/run/tailscale/tailscaled.sock:/var/run/tailscale/tailscaled.sock:ro
-```
-
-Authz pattern: backends read `Tailscale-Caps`, `json.Unmarshal` into `map[string]json.RawMessage`, and look up their own cap key (e.g. `"itdw.cloud/cap/mcp/easybill"`). Cap grants are sourced from the Tailscale ACL `grants` block — single source of truth, no per-service authz table.
+User identity now comes from TailID JWTs (see the `tailid` service), not from header injection.
 
 ## Running
 

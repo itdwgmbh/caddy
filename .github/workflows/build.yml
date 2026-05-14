@@ -86,8 +86,7 @@ jobs:
             GOOS=linux GOARCH=${arch} xcaddy build ${CADDY_VERSION} \
               --with github.com/itdwgmbh/caddy-dns-itdw \
               --with github.com/itdwgmbh/caddy-ratelimit \
-              --with github.com/itdwgmbh/caddy-s3proxy \
-              --with github.com/itdwgmbh/caddy-tailnet-identity
+              --with github.com/itdwgmbh/caddy-s3proxy
             mv caddy caddy-linux-${arch}
           done
 
