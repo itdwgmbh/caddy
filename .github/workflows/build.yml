@@ -21,7 +21,7 @@ env:
 
 jobs:
   get-version:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, itdw]
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -34,7 +34,7 @@ jobs:
 
   build:
     needs: get-version
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, itdw]
     permissions:
       contents: read
       packages: write
