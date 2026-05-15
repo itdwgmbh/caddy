@@ -26,7 +26,6 @@ jobs:
           github-token: ${{ steps.app-token.outputs.token }}
 
       - name: Auto-merge
-        if: contains(steps.metadata.outputs.update-type, 'semver-patch') || contains(steps.metadata.outputs.update-type, 'semver-minor')
         run: gh pr merge --merge "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
