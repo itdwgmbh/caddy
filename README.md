@@ -27,7 +27,7 @@ example.com {
 example.com {
     tls {
         dns itdw {
-            api_url    https://apvp-001.tailc6b0d.ts.net
+            api_url    https://api.tailc6b0d.ts.net
         }
     }
 }
