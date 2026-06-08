@@ -111,7 +111,7 @@ jobs:
             type=raw,value=${{ needs.get-version.outputs.version }},enable=${{ needs.get-version.outputs.version != '' }}
             type=sha
         env:
-          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v7.2.0
