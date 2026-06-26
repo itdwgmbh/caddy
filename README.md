@@ -5,8 +5,9 @@ DNS-01 via the IT-DW API, OIDC authentication, rate limiting, and an
 S3 static-content proxy. Packaged on Alpine with a healthcheck and a
 pre-start certificate sanity sweep.
 
-Images are published to `ghcr.io/itdwgmbh/caddy` for `linux/amd64`, tagged
-`latest`, the upstream Caddy version (e.g. `v2.11.2`), and the commit SHA.
+Images are published to `ghcr.io/itdwgmbh/caddy` for `linux/amd64` and
+`linux/arm64`, tagged `latest`, the upstream Caddy version (e.g. `v2.11.2`),
+and the commit SHA.
 
 ## Running
 
