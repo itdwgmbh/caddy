@@ -96,31 +96,20 @@ rate_limit {
 
 ### caddy-s3proxy — S3 static content
 
-Serves static content from S3-compatible storage (Hetzner Object Storage,
-Infomaniak, …) with AWS Signature V4 auth and Range-request support.
+Serves static content from S3-compatible storage with AWS Signature V4 auth and Range-request support.
 
 ```caddyfile
 docs.example.com {
     s3proxy {
-        endpoint   https://fsn1.your-objectstorage.com
+        endpoint   https://s3.example.org
         bucket     docs-site
-        region     fsn1
+        region     eu1
         access_key {env.S3_ACCESS_KEY}
         secret_key {env.S3_SECRET_KEY}
         browse        # optional directory listing
     }
 }
 ```
-
-## Certificate sanity sweep
-
-Caddy refuses to load a certificate whose stored public key doesn't match its
-private key (`tls: private key does not match public key`), and the only
-recovery is wiping the broken pair. The entrypoint runs `cert-sanity` before
-`caddy run`: it walks `/data/caddy/certificates`, compares each cert's public
-key against the matching `.key`, and removes any `crt`/`key`/`json` triple
-that fails the check so Caddy reissues on startup instead of failing closed.
-Override the storage root with `CADDY_CERT_ROOT`.
 
 ## Build
 
