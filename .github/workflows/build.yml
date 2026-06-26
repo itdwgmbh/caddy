@@ -1,0 +1,128 @@
+name: Build and Publish Caddy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 15 10 * *'  # Monthly on the 10th at 15:00 UTC
+  workflow_dispatch:
+
+# Coalesce builds: a burst of plugin merges firing workflow_dispatch
+# collapses into one run, which is fine because xcaddy resolves every
+# plugin's main fresh anyway — the latest run always sees all updates.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Get latest Caddy version
+        id: version
+        run: |
+          VERSION=$(curl -s https://api.github.com/repos/caddyserver/caddy/releases/latest | jq -r '.tag_name')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Found Caddy version: $VERSION"
+
+  build:
+    needs: get-version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3.2.0
+        with:
+          client-id: ${{ vars.CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: itdwgmbh
+
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.3
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Build sidecar binaries
+        run: |
+          for bin in healthcheck cert-sanity; do
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' \
+              -o ${bin}-amd64 ./cmd/${bin}
+          done
+
+      - name: Configure private Go modules
+        env:
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git config --global url."https://x-access-token:${APP_TOKEN}@github.com/".insteadOf "https://github.com/"
+
+      - name: Install xcaddy
+        # `go tool xcaddy` rebuilds xcaddy under the caller's GOOS/GOARCH, which
+        # breaks the cross-compile loop below. Install a host-native binary
+        # once from the version pinned in go.mod (Dependabot still updates it).
+        run: go install github.com/caddyserver/xcaddy/cmd/xcaddy
+
+      - name: Cross-compile Caddy binaries
+        env:
+          CADDY_VERSION: ${{ needs.get-version.outputs.version }}
+          GOPRIVATE: github.com/itdwgmbh/*
+        run: |
+          GOOS=linux GOARCH=amd64 xcaddy build ${CADDY_VERSION} \
+            --with github.com/itdwgmbh/caddy-dns-itdw \
+            --with github.com/itdwgmbh/caddy-oidc \
+            --with github.com/itdwgmbh/caddy-ratelimit \
+            --with github.com/itdwgmbh/caddy-s3proxy
+          mv caddy caddy-linux-amd64
+
+      - name: Format Caddyfile baked into the image
+        # Cosmetic; avoids fmt warnings at container startup regardless of
+        # what's committed to the repo.
+        run: ./caddy-linux-amd64 fmt --overwrite Caddyfile
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log into registry ghcr.io
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=${{ needs.get-version.outputs.version }},enable=${{ needs.get-version.outputs.version != '' }}
+            type=sha
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7.2.0
+        with:
+          context: .
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          provenance: false
+          cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: ${{ github.ref == 'refs/heads/main' && format('type=registry,ref=ghcr.io/{0}:buildcache,mode=max', env.IMAGE_NAME) || '' }}

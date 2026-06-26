@@ -1,0 +1,14 @@
+# Default Caddyfile
+{
+	email support@it-dw.com
+	acme_ca https://acme.itinfra.cloud/directory
+	admin 0.0.0.0:2019
+
+	log {
+		level INFO
+		output stdout
+		exclude admin.api
+	}
+}
+
+import sites-enabled/*
