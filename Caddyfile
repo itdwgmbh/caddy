@@ -1,6 +1,6 @@
 # Default Caddyfile
 {
-	admin 0.0.0.0:2019
+	admin [::]:2019
 
 	log {
 		level INFO
