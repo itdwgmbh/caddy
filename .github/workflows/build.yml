@@ -3,8 +3,6 @@ name: Build and Publish Caddy
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   schedule:
     - cron: '0 15 10 * *'  # Monthly on the 10th at 15:00 UTC
   workflow_dispatch:
@@ -95,7 +93,6 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: Log into registry ghcr.io
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v4.2.0
         with:
           registry: ghcr.io
@@ -119,7 +116,7 @@ jobs:
         with:
           context: .
           platforms: linux/amd64
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
