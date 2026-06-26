@@ -38,9 +38,8 @@ Mount your own `Caddyfile` to override it.
 
 DNS provider for DNS-01 challenges via the IT-DW API. Authenticates with an
 Authentik-issued JWT via the OAuth2 `client_credentials` grant for a service
-account (`client_id` + `username` + app-`password`), or with a static
-`api_token`. Provision a service account in Authentik with a DNS grant
-covering the zones Caddy manages.
+account (`client_id` + `username` + app-`password`). Provision a service
+account in Authentik with a DNS grant covering the zones Caddy manages.
 
 ```caddyfile
 {
@@ -57,7 +56,6 @@ covering the zones Caddy manages.
 | `client_id`  | Authentik OAuth2 client ID                               |
 | `username`   | Service-account username                                 |
 | `password`   | Service-account app-password                             |
-| `api_token`  | Static bearer token (bypasses Authentik)                 |
 | `api_url`    | API base URL (default `https://api.it-dw.com`)           |
 | `token_url`  | Authentik token endpoint                                 |
 
