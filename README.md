@@ -8,32 +8,40 @@ Images are published to `ghcr.io/itdwgmbh/caddy` for linux/amd64 and linux/arm64
 
 ### caddy-dns-itdw
 
-DNS provider for ACME DNS-01 challenges via the IT-DW API. Authenticates over Tailscale — no API keys needed.
+DNS provider for ACME DNS-01 challenges via the IT-DW API. Authenticates with an Authentik-issued JWT obtained via the OAuth2 `client_credentials` grant for a service account (`client_id` + `username` + app-`password`), or with a static `api_token`.
 
 ```caddyfile
 # Global — all sites use IT-DW DNS for certificates
 {
-    acme_dns itdw
+    acme_dns itdw {
+        client_id {env.ITDW_CLIENT_ID}
+        username  {env.ITDW_USERNAME}
+        password  {env.ITDW_PASSWORD}
+    }
 }
 
 # Per-site
 example.com {
     tls {
-        dns itdw
+        dns itdw {
+            client_id {env.ITDW_CLIENT_ID}
+            username  {env.ITDW_USERNAME}
+            password  {env.ITDW_PASSWORD}
+        }
     }
 }
 
-# With optional URL override
+# Static bearer token instead of client_credentials
 example.com {
     tls {
         dns itdw {
-            api_url    https://api.tailc6b0d.ts.net
+            api_token {env.ITDW_API_TOKEN}
         }
     }
 }
 ```
 
-Requires the Caddy instance to be on the Tailscale network.
+Provision a service account in Authentik with a DNS grant covering the zones Caddy manages.
 
 ### caddy-ratelimit
 
