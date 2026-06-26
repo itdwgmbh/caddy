@@ -1,6 +1,6 @@
 # Caddy (IT-DW)
 
-Custom Caddy build with DNS providers, OIDC authentication, rate limiting, S3 proxy, and tailnet identity.
+Custom Caddy build with DNS providers, OIDC authentication, rate limiting, and S3 proxy.
 
 Images are published to `ghcr.io/itdwgmbh/caddy` for linux/amd64 and linux/arm64.
 
@@ -189,8 +189,6 @@ internal.example {
     reverse_proxy http://backend:8080
 }
 ```
-
-User identity now comes from TailID JWTs (see the `tailid` service), not from header injection.
 
 ## Running
 
