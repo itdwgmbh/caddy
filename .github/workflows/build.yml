@@ -81,7 +81,7 @@ jobs:
         run: |
           for arch in amd64 arm64; do
             GOOS=linux GOARCH=$arch xcaddy build ${CADDY_VERSION} \
-              --with github.com/itdwgmbh/caddy-dns-itdw \
+              --with github.com/caddy-dns/acmedns \
               --with github.com/itdwgmbh/caddy-oidc \
               --with github.com/itdwgmbh/caddy-ratelimit \
               --with github.com/itdwgmbh/caddy-s3proxy

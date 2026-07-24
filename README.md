@@ -1,8 +1,8 @@
 # Caddy (IT-DW)
 
 A custom [Caddy](https://caddyserver.com) build bundling the IT-DW plugins:
-DNS-01 via the IT-DW API, OIDC authentication, rate limiting, and an
-S3 static-content proxy. Packaged on Alpine with a healthcheck and a
+DNS-01 via acme-dns (IT-DW DNS API), OIDC authentication, rate limiting, and
+an S3 static-content proxy. Packaged on Alpine with a healthcheck and a
 pre-start certificate sanity sweep.
 
 Images are published to `ghcr.io/itdwgmbh/caddy` for `linux/amd64` and
@@ -35,30 +35,30 @@ Mount your own `Caddyfile` to override it.
 
 ## Bundled modules
 
-### caddy-dns-itdw — ACME DNS-01
+### acmedns — ACME DNS-01
 
-DNS provider for DNS-01 challenges via the IT-DW API. Authenticates with an
-Authentik-issued JWT via the OAuth2 `client_credentials` grant for a service
-account (`client_id` + `username` + app-`password`). Provision a service
-account in Authentik with a DNS grant covering the zones Caddy manages.
+Stock [`caddy-dns/acmedns`](https://github.com/caddy-dns/acmedns) provider
+for DNS-01 challenges against the IT-DW DNS API's acme-dns endpoint. The
+credential is a per-name acme-dns registration; mint it with
+`itdw-api acme register --name <fqdn> --format caddy` and paste the output:
 
 ```caddyfile
-{
-    acme_dns itdw {
-        client_id {env.ITDW_CLIENT_ID}
-        username  {env.ITDW_USERNAME}
-        password  {env.ITDW_PASSWORD}
+app.kunde.de {
+    tls {
+        dns acmedns {
+            username   {env.ACMEDNS_USERNAME}
+            password   {env.ACMEDNS_PASSWORD}
+            subdomain  {env.ACMEDNS_SUBDOMAIN}
+            server_url https://dns-api.itinfra.cloud
+        }
     }
+    reverse_proxy backend:8080
 }
 ```
 
-| Option       | Description                                              |
-|--------------|----------------------------------------------------------|
-| `client_id`  | Authentik OAuth2 client ID                               |
-| `username`   | Service-account username                                 |
-| `password`   | Service-account app-password                             |
-| `api_url`    | API base URL (default `https://api.it-dw.com`)           |
-| `token_url`  | Authentik token endpoint                                 |
+One registration covers the apex cert, the wildcard cert, and the combined
+apex+wildcard order for its name. The credential authorizes exactly one
+challenge record — safe to deploy on hosts outside IT-DW control.
 
 ### caddy-oidc — OIDC authentication
 
