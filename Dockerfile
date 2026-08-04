@@ -1,5 +1,7 @@
 FROM alpine:3.24.1
 
+LABEL org.opencontainers.image.description="Caddy web server image"
+
 ARG TARGETARCH
 
 RUN apk add --no-cache ca-certificates tzdata
