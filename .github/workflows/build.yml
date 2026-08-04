@@ -84,7 +84,8 @@ jobs:
               --with github.com/caddy-dns/acmedns \
               --with github.com/itdwgmbh/caddy-oidc \
               --with github.com/itdwgmbh/caddy-ratelimit \
-              --with github.com/itdwgmbh/caddy-s3proxy
+              --with github.com/itdwgmbh/caddy-s3proxy \
+              --replace github.com/google/cel-go=github.com/google/cel-go@v0.28.1
             mv caddy caddy-linux-${arch}
           done
 
