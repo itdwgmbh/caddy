@@ -144,8 +144,6 @@ app.example.com {
 }
 ```
 
-Full options and Entra / Arc setup: [caddy-oidc](https://github.com/itdwgmbh/caddy-oidc).
-
 ### caddy-ratelimit — HTTP rate limiting
 
 Sliding-window rate limiting with multiple zones, request matchers, and
