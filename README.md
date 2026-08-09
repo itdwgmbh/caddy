@@ -117,3 +117,24 @@ docs.example.com {
 Images build automatically on push to `main`, monthly, and on manual trigger.
 Each build resolves the latest upstream Caddy release and compiles it with
 `xcaddy` plus the bundled plugins.
+
+## Supply chain
+
+Every published image includes:
+
+- **SBOM** — SPDX attestation from BuildKit (Syft), attached to the image
+- **Provenance** — SLSA provenance (`mode=max`) for the GitHub Actions build
+- **Cosign** — keyless signature via the workflow OIDC identity (Sigstore)
+- **Trivy** — post-push scan (`CRITICAL`/`HIGH`, fixed only); SARIF to the repo Security tab
+
+Verify a digest:
+
+```bash
+cosign verify \
+  --certificate-identity-regexp 'https://github.com/itdwgmbh/caddy/.github/workflows/build.yml@.*' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  ghcr.io/itdwgmbh/caddy@sha256:<digest>
+
+docker buildx imagetools inspect ghcr.io/itdwgmbh/caddy:latest \
+  --format '{{ json (index .SBOM "linux/amd64").SPDX }}'
+```
