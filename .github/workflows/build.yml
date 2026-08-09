@@ -124,7 +124,7 @@ jobs:
           name: caddy-debs
           path: dist/deb/*.deb
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 7
 
       - name: Publish deb packages to GitHub Release
         env:
