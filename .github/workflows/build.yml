@@ -52,9 +52,11 @@ jobs:
         uses: actions/checkout@v7.0.1
 
       - name: Set up Go
+        # Latest stable toolchain for the image binaries. The go.mod `go`
+        # line is the language minimum only — Dependabot does not bump it.
         uses: actions/setup-go@v7
         with:
-          go-version-file: go.mod
+          go-version: stable
 
       - name: Build sidecar binaries
         run: |

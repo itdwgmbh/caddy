@@ -1,6 +1,6 @@
 module github.com/itdwgmbh/caddy
 
-go 1.26.4
+go 1.26
 
 tool github.com/caddyserver/xcaddy/cmd/xcaddy
 
