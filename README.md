@@ -112,21 +112,39 @@ challenge record — safe to deploy on hosts outside IT-DW control.
 
 ### caddy-oidc — OIDC authentication
 
-Authorization Code flow with PKCE, opinionated towards Authentik. Stateless
-session (verified ID token in an HttpOnly cookie); claims forwarded upstream as
-`X-Auth-*` headers — no session store or signing secret.
+Authorization Code flow with PKCE, opinionated towards Microsoft Entra ID.
+Stateless session (verified ID token in an HttpOnly cookie); claims forwarded
+upstream as `X-Auth-*` headers — no session store or signing secret.
+
+Client auth is either a secret or an Azure managed identity (federated
+credential / client assertion). MI works on Azure IMDS, App Service /
+Container Apps (`IDENTITY_ENDPOINT` + `IDENTITY_HEADER`), and Azure Arc HIMDS.
 
 ```caddyfile
+# Client secret
 app.example.com {
     oidc {
-        issuer        https://auth.example.com/application/o/myapp/
-        client_id     {env.OIDC_CLIENT_ID}
-        client_secret {env.OIDC_CLIENT_SECRET}
-        allowed_groups admins   # optional: restrict to group members
+        issuer         https://login.microsoftonline.com/{tenant-id}/v2.0
+        client_id      {env.OIDC_CLIENT_ID}
+        client_secret  {env.OIDC_CLIENT_SECRET}
+        # group object IDs and/or app role values
+        allowed_groups aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee Admin
+    }
+    reverse_proxy backend:8080
+}
+
+# Managed identity (system-assigned; use managed_identity <mi-client-id> for UAMI)
+app.example.com {
+    oidc {
+        issuer           https://login.microsoftonline.com/{tenant-id}/v2.0
+        client_id        {env.OIDC_CLIENT_ID}
+        managed_identity
     }
     reverse_proxy backend:8080
 }
 ```
+
+Full options and Entra / Arc setup: [caddy-oidc](https://github.com/itdwgmbh/caddy-oidc).
 
 ### caddy-ratelimit — HTTP rate limiting
 
