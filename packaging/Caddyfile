@@ -1,0 +1,12 @@
+# Default Caddyfile (host package)
+{
+	admin localhost:2019
+
+	log {
+		level INFO
+		output stdout
+		exclude admin.api
+	}
+}
+
+import sites-enabled/*

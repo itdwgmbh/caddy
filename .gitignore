@@ -42,3 +42,7 @@ docker-compose.override.yml
 # Local go build artifact
 /healthcheck
 /healthcheck-*
+/cert-sanity
+/cert-sanity-*
+/caddy-linux-*
+/dist/

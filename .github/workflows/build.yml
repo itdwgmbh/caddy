@@ -35,8 +35,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       digest: ${{ steps.build.outputs.digest }}
+      deb_version: ${{ steps.deb-version.outputs.version }}
     permissions:
-      contents: read
+      contents: write  # GitHub Release assets for .deb packages
       packages: write
       id-token: write  # keyless cosign via Actions OIDC
     steps:
@@ -98,6 +99,73 @@ jobs:
         # Cosmetic; avoids fmt warnings at container startup regardless of
         # what's committed to the repo.
         run: ./caddy-linux-amd64 fmt --overwrite Caddyfile
+
+      - name: Compute deb package version
+        id: deb-version
+        env:
+          CADDY_VERSION: ${{ needs.get-version.outputs.version }}
+        run: |
+          # Unique per build so apt can distinguish plugin rebuilds of the
+          # same upstream Caddy tag. Example: 2.11.2+itdw.42
+          VER="${CADDY_VERSION#v}+itdw.${{ github.run_number }}"
+          echo "version=${VER}" >> "$GITHUB_OUTPUT"
+          echo "Deb version: ${VER}"
+
+      - name: Build Debian packages
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq dpkg-dev
+          ./scripts/build-deb.sh "${{ steps.deb-version.outputs.version }}" dist/deb
+          ls -la dist/deb/
+
+      - name: Upload deb packages as artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: caddy-debs
+          path: dist/deb/*.deb
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish deb packages to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CADDY_VERSION: ${{ needs.get-version.outputs.version }}
+          DEB_VERSION: ${{ steps.deb-version.outputs.version }}
+        run: |
+          replace_debs() {
+            local tag="$1"
+            # Drop previous .deb assets so unique +itdw.N filenames do not accumulate.
+            gh release view "${tag}" --json assets -q '.assets[].name' 2>/dev/null \
+              | while read -r asset; do
+                  [[ ${asset} == *.deb ]] || continue
+                  gh release delete-asset "${tag}" "${asset}" --yes || true
+                done
+            gh release upload "${tag}" dist/deb/*.deb
+          }
+
+          # Rolling release always holding the latest debs (aptly-job target).
+          if ! gh release view packages >/dev/null 2>&1; then
+            gh release create packages \
+              --title "Caddy packages (rolling)" \
+              --notes "Rolling .deb packages for apt.itinfra.cloud and manual install. Assets are replaced on every successful main build." \
+              --latest=false
+          fi
+          replace_debs packages
+
+          # Versioned release for the upstream Caddy tag.
+          TAG="${CADDY_VERSION}"
+          NOTES="IT-DW Caddy ${CADDY_VERSION} (package ${DEB_VERSION})
+
+          Same binary as \`ghcr.io/itdwgmbh/caddy:${CADDY_VERSION}\`.
+          Modules: acmedns, caddy-oidc, caddy-ratelimit, caddy-s3proxy."
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            replace_debs "${TAG}"
+          else
+            gh release create "${TAG}" dist/deb/*.deb \
+              --title "Caddy ${CADDY_VERSION}" \
+              --notes "${NOTES}" \
+              --latest=false
+          fi
 
       - name: Set up QEMU
         # Emulates arm64 for the Dockerfile's `apk add` RUN step; the Go/caddy

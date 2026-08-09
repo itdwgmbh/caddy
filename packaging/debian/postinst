@@ -1,0 +1,61 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+	if ! getent group caddy >/dev/null; then
+		groupadd --system caddy
+	fi
+	if ! getent passwd caddy >/dev/null; then
+		useradd --system \
+			--gid caddy \
+			--create-home \
+			--home-dir /var/lib/caddy \
+			--shell /usr/sbin/nologin \
+			--comment "Caddy web server" \
+			caddy
+	fi
+	if getent group www-data >/dev/null; then
+		usermod -aG www-data caddy
+	fi
+
+	if [ ! -d /var/log/caddy ]; then
+		mkdir -p /var/log/caddy
+	fi
+	chown caddy:caddy /var/log/caddy
+	chown -R caddy:caddy /var/lib/caddy
+
+	if [ ! -d /etc/caddy/sites-enabled ]; then
+		mkdir -p /etc/caddy/sites-enabled
+	fi
+fi
+
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ]; then
+	if command -v deb-systemd-helper >/dev/null 2>&1; then
+		deb-systemd-helper unmask caddy.service >/dev/null || true
+		deb-systemd-helper unmask caddy-api.service >/dev/null || true
+
+		if deb-systemd-helper --quiet was-enabled caddy.service 2>/dev/null; then
+			deb-systemd-helper enable caddy.service >/dev/null || true
+			deb-systemd-invoke start caddy.service >/dev/null || true
+		else
+			# First install: enable and start the config-file unit.
+			if [ -z "${2:-}" ]; then
+				deb-systemd-helper enable caddy.service >/dev/null || true
+				deb-systemd-invoke start caddy.service >/dev/null || true
+			else
+				deb-systemd-helper update-state caddy.service >/dev/null || true
+				deb-systemd-helper update-state caddy-api.service >/dev/null || true
+			fi
+		fi
+	fi
+
+	if [ -d /run/systemd/system ]; then
+		systemctl --system daemon-reload >/dev/null || true
+		if [ -n "${2:-}" ]; then
+			deb-systemd-invoke try-restart caddy.service >/dev/null || true
+			deb-systemd-invoke try-restart caddy-api.service >/dev/null || true
+		fi
+	fi
+fi
+
+exit 0

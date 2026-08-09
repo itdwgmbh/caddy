@@ -1,15 +1,56 @@
 # Caddy (IT-DW)
 
-Custom [Caddy](https://caddyserver.com) image for IT-DW edges. Bundles DNS-01 via
+Custom [Caddy](https://caddyserver.com) for IT-DW edges. Bundles DNS-01 via
 acme-dns (IT-DW DNS API), OIDC authentication, HTTP rate limiting, and an S3
-static-content proxy. Packaged on Alpine with a Docker healthcheck and a
-pre-start certificate sanity sweep.
+static-content proxy.
 
-Images: `ghcr.io/itdwgmbh/caddy` (`linux/amd64`, `linux/arm64`).
+Shipped as:
 
-Tags: `latest`, upstream Caddy version (e.g. `v2.11.2`), and `sha-<commit>`.
+| Artifact | Where |
+|---|---|
+| Container image | `ghcr.io/itdwgmbh/caddy` (`linux/amd64`, `linux/arm64`) |
+| Debian/Ubuntu `.deb` | GitHub Releases + `https://apt.itinfra.cloud/` |
 
-## Running
+Image tags: `latest`, upstream Caddy version (e.g. `v2.11.2`), and `sha-<commit>`.
+
+## Install (Debian / Ubuntu)
+
+From the IT-DW APT repository (preferred on bare metal):
+
+```bash
+curl -fsSL https://apt.itinfra.cloud/gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/itinfra.gpg
+echo "deb [signed-by=/usr/share/keyrings/itinfra.gpg] https://apt.itinfra.cloud/ itdw-packages main" \
+  | sudo tee /etc/apt/sources.list.d/itinfra.list
+sudo apt update
+sudo apt install caddy
+```
+
+Or install a `.deb` directly from
+[GitHub Releases](https://github.com/itdwgmbh/caddy/releases) (rolling tag
+`packages`, or a Caddy version tag such as `v2.11.2`).
+
+The package installs:
+
+| Path | Role |
+|---|---|
+| `/usr/bin/caddy` | Custom Caddy binary |
+| `/usr/bin/cert-sanity` | Pre-start cert/key sanity check |
+| `/etc/caddy/Caddyfile` | Default config (`import sites-enabled/*`) |
+| `/etc/caddy/sites-enabled/` | Drop site configs here |
+| `caddy.service` | systemd unit (config file) |
+| `caddy-api.service` | optional API/resume unit |
+
+```bash
+sudo systemctl enable --now caddy
+# site configs:
+#   /etc/caddy/sites-enabled/*.caddy
+sudo systemctl reload caddy
+```
+
+Package version looks like `2.11.2+itdw.42` (upstream Caddy + CI run number) so
+plugin rebuilds of the same Caddy tag remain upgradeable via apt.
+
+## Run (container)
 
 ```yaml
 services:
@@ -123,13 +164,19 @@ docs.example.com {
 
 ## Build
 
-Images build on push to `main`, monthly (10th, 15:00 UTC), and on manual
+Artifacts build on push to `main`, monthly (10th, 15:00 UTC), and on manual
 dispatch. Each run:
 
 - Resolves the **latest upstream Caddy release**
 - Compiles with **latest stable Go** (`actions/setup-go` `stable`)
 - Builds plugins from their current `main` via `xcaddy`
-- Publishes multi-arch to GHCR
+- Publishes multi-arch image to GHCR
+- Builds `amd64`/`arm64` `.deb` packages and uploads them to GitHub Releases
+  (`packages` rolling tag and the upstream Caddy version tag)
+
+The APT repository at `apt.itinfra.cloud` is refreshed by
+[aptly-job](https://github.com/itdwgmbh/aptly-job), which imports the rolling
+`packages` release debs.
 
 Plugin set:
 
@@ -140,7 +187,7 @@ Plugin set:
 
 ## Supply chain
 
-Every published image includes:
+Every published **image** includes:
 
 - **SBOM** — SPDX attestation from BuildKit (Syft)
 - **Provenance** — SLSA provenance (`mode=max`) for the GitHub Actions build
