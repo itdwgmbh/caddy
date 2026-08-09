@@ -1,13 +1,13 @@
 # Caddy (IT-DW)
 
-A custom [Caddy](https://caddyserver.com) build bundling the IT-DW plugins:
-DNS-01 via acme-dns (IT-DW DNS API), OIDC authentication, rate limiting, and
-an S3 static-content proxy. Packaged on Alpine with a healthcheck and a
+Custom [Caddy](https://caddyserver.com) image for IT-DW edges. Bundles DNS-01 via
+acme-dns (IT-DW DNS API), OIDC authentication, HTTP rate limiting, and an S3
+static-content proxy. Packaged on Alpine with a Docker healthcheck and a
 pre-start certificate sanity sweep.
 
-Images are published to `ghcr.io/itdwgmbh/caddy` for `linux/amd64` and
-`linux/arm64`, tagged `latest`, the upstream Caddy version (e.g. `v2.11.2`),
-and the commit SHA.
+Images: `ghcr.io/itdwgmbh/caddy` (`linux/amd64`, `linux/arm64`).
+
+Tags: `latest`, upstream Caddy version (e.g. `v2.11.2`), and `sha-<commit>`.
 
 ## Running
 
@@ -30,17 +30,26 @@ volumes:
   caddy_config:
 ```
 
-The image ships a default `/etc/caddy/Caddyfile` that imports `sites-enabled/*`.
-Mount your own `Caddyfile` to override it.
+The image ships a default `/etc/caddy/Caddyfile` that binds the admin API on
+`[::]:2019` and imports `sites-enabled/*`. Mount your own `Caddyfile` to
+override it. Do not publish port `2019` unless you intend to expose the admin API.
+
+### Image extras
+
+| Path | Role |
+|---|---|
+| `/usr/bin/caddy` | Custom Caddy with the modules below |
+| `/usr/local/bin/healthcheck` | Docker `HEALTHCHECK` — `GET http://localhost:2019/config/` |
+| `/usr/local/bin/cert-sanity` | Pre-start: drops cert/key pairs whose public keys do not match |
+| `/usr/local/bin/entrypoint.sh` | Runs `cert-sanity`, then `exec`s Caddy |
 
 ## Bundled modules
 
 ### acmedns — ACME DNS-01
 
-Stock [`caddy-dns/acmedns`](https://github.com/caddy-dns/acmedns) provider
-for DNS-01 challenges against the IT-DW DNS API's acme-dns endpoint. The
-credential is a per-name acme-dns registration; mint it with
-`itdw-api acme register --name <fqdn> --format caddy` and paste the output:
+Stock [`caddy-dns/acmedns`](https://github.com/caddy-dns/acmedns) for DNS-01
+against the IT-DW DNS API acme-dns endpoint. Mint a per-name registration with
+`itdw-api acme register --name <fqdn> --format caddy`:
 
 ```caddyfile
 app.kunde.de {
@@ -62,10 +71,9 @@ challenge record — safe to deploy on hosts outside IT-DW control.
 
 ### caddy-oidc — OIDC authentication
 
-Authorization Code flow with PKCE, opinionated towards Authentik. Keeps a
-stateless session (verified ID token in an HttpOnly cookie) and forwards
-claims to the upstream as `X-Auth-*` headers — no session store or signing
-secret to manage.
+Authorization Code flow with PKCE, opinionated towards Authentik. Stateless
+session (verified ID token in an HttpOnly cookie); claims forwarded upstream as
+`X-Auth-*` headers — no session store or signing secret.
 
 ```caddyfile
 app.example.com {
@@ -97,7 +105,8 @@ rate_limit {
 
 ### caddy-s3proxy — S3 static content
 
-Serves static content from S3-compatible storage with AWS Signature V4 auth and Range-request support.
+Static content from S3-compatible storage with AWS Signature V4 and Range
+requests.
 
 ```caddyfile
 docs.example.com {
@@ -114,20 +123,29 @@ docs.example.com {
 
 ## Build
 
-Images build automatically on push to `main`, monthly, and on manual trigger.
-Each build resolves the latest upstream Caddy release and compiles it with
-`xcaddy` plus the bundled plugins.
+Images build on push to `main`, monthly (10th, 15:00 UTC), and on manual
+dispatch. Each run:
+
+- Resolves the **latest upstream Caddy release**
+- Compiles with **latest stable Go** (`actions/setup-go` `stable`)
+- Builds plugins from their current `main` via `xcaddy`
+- Publishes multi-arch to GHCR
+
+Plugin set:
+
+- `github.com/caddy-dns/acmedns`
+- `github.com/itdwgmbh/caddy-oidc`
+- `github.com/itdwgmbh/caddy-ratelimit`
+- `github.com/itdwgmbh/caddy-s3proxy`
 
 ## Supply chain
 
 Every published image includes:
 
-- **SBOM** — SPDX attestation from BuildKit (Syft), attached to the image
+- **SBOM** — SPDX attestation from BuildKit (Syft)
 - **Provenance** — SLSA provenance (`mode=max`) for the GitHub Actions build
 - **Cosign** — keyless signature via the workflow OIDC identity (Sigstore)
-- **Trivy** — post-push scan (`CRITICAL`/`HIGH`, fixed only); SARIF to the repo Security tab
-
-Verify a digest:
+- **Trivy** — post-push scan (`CRITICAL`/`HIGH`, fixed only); SARIF on the Security tab
 
 ```bash
 cosign verify \

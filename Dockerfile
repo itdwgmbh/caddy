@@ -1,6 +1,6 @@
 FROM alpine:3.24.1
 
-LABEL org.opencontainers.image.description="Caddy web server image"
+LABEL org.opencontainers.image.description="IT-DW Caddy: acme-dns, OIDC, rate limit, S3 proxy"
 
 ARG TARGETARCH
 
