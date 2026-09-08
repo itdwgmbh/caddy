@@ -1,0 +1,23 @@
+name: Notify package factory
+"on":
+  workflow_run:
+    workflows: ["Build and Publish Caddy"]
+    types: [completed]
+permissions:
+  contents: read
+jobs:
+  notify:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.event != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@v3.2.0
+        id: app
+        with:
+          client-id: ${{ vars.CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: itdwgmbh
+          repositories: package-factory
+      - name: Publish packages
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: gh workflow run packages.yml -R itdwgmbh/package-factory

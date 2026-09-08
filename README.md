@@ -9,7 +9,7 @@ Shipped as:
 | Artifact | Where |
 |---|---|
 | Container image | `ghcr.io/itdwgmbh/caddy` (`linux/amd64`, `linux/arm64`) |
-| Debian/Ubuntu `.deb` | GitHub Releases + `https://apt.itinfra.cloud/` |
+| Debian/Ubuntu `.deb` | Azure downloads + the package-factory APT repository |
 
 Image tags: `latest`, upstream Caddy version (e.g. `v2.11.2`), and `sha-<commit>`.
 
@@ -18,16 +18,15 @@ Image tags: `latest`, upstream Caddy version (e.g. `v2.11.2`), and `sha-<commit>
 From the IT-DW APT repository (preferred on bare metal):
 
 ```bash
-curl -fsSL https://apt.itinfra.cloud/gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/itinfra.gpg
-echo "deb [signed-by=/usr/share/keyrings/itinfra.gpg] https://apt.itinfra.cloud/ itdw-packages main" \
+curl -fsSL https://itdwstatic.blob.core.windows.net/packages/gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/itinfra.gpg
+echo "deb [signed-by=/usr/share/keyrings/itinfra.gpg] https://itdwstatic.blob.core.windows.net/packages/apt/ itdw-packages main" \
   | sudo tee /etc/apt/sources.list.d/itinfra.list
 sudo apt update
 sudo apt install caddy
 ```
 
-Or install a `.deb` directly from
-[GitHub Releases](https://github.com/itdwgmbh/caddy/releases) (rolling tag
-`packages`, or a Caddy version tag such as `v2.11.2`).
+Or download `caddy-amd64.deb` or `caddy-arm64.deb` from
+`https://itdwstatic.blob.core.windows.net/packages/downloads/caddy/`.
 
 The package installs:
 
@@ -187,12 +186,9 @@ dispatch. Each run:
 - Compiles with **latest stable Go** (`actions/setup-go` `stable`)
 - Builds plugins from their current `main` via `xcaddy`
 - Publishes multi-arch image to GHCR
-- Builds `amd64`/`arm64` `.deb` packages and uploads them to GitHub Releases
-  (`packages` rolling tag and the upstream Caddy version tag)
-
-The APT repository at `apt.itinfra.cloud` is refreshed by
-[aptly-job](https://github.com/itdwgmbh/aptly-job), which imports the rolling
-`packages` release debs.
+- Builds `amd64`/`arm64` `.deb` packages as CI artifacts
+- Notifies [package-factory](https://github.com/itdwgmbh/package-factory), which
+  publishes downloads and the signed APT repository on Azure Blob Storage
 
 Plugin set:
 
