@@ -81,6 +81,9 @@ jobs:
         run: go install github.com/caddyserver/xcaddy/cmd/xcaddy
 
       - name: Cross-compile Caddy binaries
+        # The otel log exporters are floor-pinned to the go.opentelemetry.io/otel/log
+        # minor that the plugins select; Caddy's autoexport requires an older
+        # exporter minor that does not compile against it.
         env:
           CADDY_VERSION: ${{ needs.get-version.outputs.version }}
           GOPRIVATE: github.com/itdwgmbh/*
@@ -91,6 +94,8 @@ jobs:
               --with github.com/itdwgmbh/caddy-oidc \
               --with github.com/itdwgmbh/caddy-ratelimit \
               --with github.com/itdwgmbh/caddy-s3proxy \
+              --with go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp@v0.21.0 \
+              --with go.opentelemetry.io/otel/exporters/stdout/stdoutlog@v0.21.0 \
               --replace github.com/google/cel-go=github.com/google/cel-go@v0.28.1
             mv caddy caddy-linux-${arch}
           done
