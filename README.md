@@ -4,14 +4,9 @@ Custom [Caddy](https://caddyserver.com) for IT-DW edges. Bundles DNS-01 via
 acme-dns (IT-DW DNS API), OIDC authentication, HTTP rate limiting, and an S3
 static-content proxy.
 
-Shipped as:
-
-| Artifact | Where |
-|---|---|
-| Container image | `ghcr.io/itdwgmbh/caddy` (`linux/amd64`, `linux/arm64`) |
-| Debian/Ubuntu `.deb` | Azure downloads + the package-factory APT repository |
-
-Image tags: `latest`, upstream Caddy version (e.g. `v2.11.2`), and `sha-<commit>`.
+Shipped as the container image `ghcr.io/itdwgmbh/caddy` (tags `latest`, the
+upstream Caddy version, `sha-<commit>`) and as a `.deb` in the IT-DW APT
+repository and downloads.
 
 ## Install (Debian / Ubuntu)
 
@@ -28,26 +23,19 @@ sudo apt install caddy
 Or download `caddy-amd64.deb` or `caddy-arm64.deb` from
 `https://itdwstatic.blob.core.windows.net/packages/downloads/caddy/`.
 
-The package installs:
-
-| Path | Role |
-|---|---|
-| `/usr/bin/caddy` | Custom Caddy binary |
-| `/usr/bin/cert-sanity` | Pre-start cert/key sanity check |
-| `/etc/caddy/Caddyfile` | Default config (`import sites-enabled/*`) |
-| `/etc/caddy/sites-enabled/` | Drop site configs here |
-| `caddy.service` | systemd unit (config file) |
-| `caddy-api.service` | optional API/resume unit |
+Config lives at `/etc/caddy/Caddyfile` (`import sites-enabled/*`); drop site
+configs into `/etc/caddy/sites-enabled/`. `caddy.service` runs that config
+file; `caddy-api.service` runs `caddy run --resume` instead, reloading the
+config last applied through the admin API. `dpkg -L caddy` lists every
+installed path.
 
 ```bash
 sudo systemctl enable --now caddy
-# site configs:
-#   /etc/caddy/sites-enabled/*.caddy
 sudo systemctl reload caddy
 ```
 
-Package version looks like `2.11.2+itdw.42` (upstream Caddy + CI run number) so
-plugin rebuilds of the same Caddy tag remain upgradeable via apt.
+The package version is the upstream Caddy version plus `+itdw.<CI run number>`,
+so plugin rebuilds of the same Caddy tag remain upgradeable via apt.
 
 ## Run (container)
 
@@ -70,26 +58,25 @@ volumes:
   caddy_config:
 ```
 
-The image ships a default `/etc/caddy/Caddyfile` that binds the admin API on
-`[::]:2019` and imports `sites-enabled/*`. Mount your own `Caddyfile` to
-override it. Do not publish port `2019` unless you intend to expose the admin API.
+The image's default `Caddyfile` binds the admin API on all interfaces and
+imports `sites-enabled/*`; mount your own to override it. Do not publish the
+admin port unless the admin API is meant to be reachable.
 
-### Image extras
-
-| Path | Role |
-|---|---|
-| `/usr/bin/caddy` | Custom Caddy with the modules below |
-| `/usr/local/bin/healthcheck` | Docker `HEALTHCHECK` — `GET http://localhost:2019/config/` |
-| `/usr/local/bin/cert-sanity` | Pre-start: drops cert/key pairs whose public keys do not match |
-| `/usr/local/bin/entrypoint.sh` | Runs `cert-sanity`, then `exec`s Caddy |
+The entrypoint runs `cert-sanity` before Caddy: it drops any cert/key pair
+whose public keys no longer match, which is otherwise a fatal load error Caddy
+won't recover from on its own.
 
 ## Bundled modules
 
-### acmedns — ACME DNS-01
+The `xcaddy build` step in `.github/workflows/build.yml` lists the modules.
+Configuration is in each module's README:
+[acmedns](https://github.com/caddy-dns/acmedns),
+[caddy-oidc](https://github.com/itdwgmbh/caddy-oidc),
+[caddy-ratelimit](https://github.com/itdwgmbh/caddy-ratelimit),
+[caddy-s3proxy](https://github.com/itdwgmbh/caddy-s3proxy).
 
-Stock [`caddy-dns/acmedns`](https://github.com/caddy-dns/acmedns) for DNS-01
-against the IT-DW DNS API acme-dns endpoint. Mint a per-name registration with
-`itdw-api acme register --name <fqdn> --format caddy`:
+For DNS-01 against the IT-DW DNS API, mint a per-name acme-dns registration
+with `itdw-api acme register --name <fqdn> --format caddy`:
 
 ```caddyfile
 app.kunde.de {
@@ -107,104 +94,21 @@ app.kunde.de {
 
 One registration covers the apex cert, the wildcard cert, and the combined
 apex+wildcard order for its name. The credential authorizes exactly one
-challenge record — safe to deploy on hosts outside IT-DW control.
-
-### caddy-oidc — OIDC authentication
-
-Authorization Code flow with PKCE, opinionated towards Microsoft Entra ID.
-Stateless session (verified ID token in an HttpOnly cookie); claims forwarded
-upstream as `X-Auth-*` headers — no session store or signing secret.
-
-Client auth is either a secret or an Azure managed identity (federated
-credential / client assertion). MI works on Azure IMDS, App Service /
-Container Apps (`IDENTITY_ENDPOINT` + `IDENTITY_HEADER`), and Azure Arc HIMDS.
-
-```caddyfile
-# Client secret
-app.example.com {
-    oidc {
-        issuer         https://login.microsoftonline.com/{tenant-id}/v2.0
-        client_id      {env.OIDC_CLIENT_ID}
-        client_secret  {env.OIDC_CLIENT_SECRET}
-        # group object IDs and/or app role values
-        allowed_groups aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee Admin
-    }
-    reverse_proxy backend:8080
-}
-
-# Managed identity (system-assigned; use managed_identity <mi-client-id> for UAMI)
-app.example.com {
-    oidc {
-        issuer           https://login.microsoftonline.com/{tenant-id}/v2.0
-        client_id        {env.OIDC_CLIENT_ID}
-        managed_identity
-    }
-    reverse_proxy backend:8080
-}
-```
-
-### caddy-ratelimit — HTTP rate limiting
-
-Sliding-window rate limiting with multiple zones, request matchers, and
-CIDR-based key grouping for IPv6.
-
-```caddyfile
-rate_limit {
-    zone per_ip {
-        key             {remote_host}
-        events          100
-        window          1m
-        ipv6_prefix_len 64   # group an IPv6 /64 under one limiter
-    }
-}
-```
-
-### caddy-s3proxy — S3 static content
-
-Static content from S3-compatible storage with AWS Signature V4 and Range
-requests.
-
-```caddyfile
-docs.example.com {
-    s3proxy {
-        endpoint   https://s3.example.org
-        bucket     docs-site
-        region     eu1
-        access_key {env.S3_ACCESS_KEY}
-        secret_key {env.S3_SECRET_KEY}
-        browse        # optional directory listing
-    }
-}
-```
+challenge record, so it is safe to deploy on hosts outside IT-DW control.
 
 ## Build
 
-Artifacts build on push to `main`, monthly (10th, 15:00 UTC), and on manual
-dispatch. Each run:
-
-- Resolves the **latest upstream Caddy release**
-- Compiles with **latest stable Go** (`actions/setup-go` `stable`)
-- Builds plugins from their current `main` via `xcaddy`
-- Publishes multi-arch image to GHCR
-- Builds `amd64`/`arm64` `.deb` packages as CI artifacts
-- Notifies [package-factory](https://github.com/itdwgmbh/package-factory), which
-  publishes downloads and the signed APT repository on Azure Blob Storage
-
-Plugin set:
-
-- `github.com/caddy-dns/acmedns`
-- `github.com/itdwgmbh/caddy-oidc`
-- `github.com/itdwgmbh/caddy-ratelimit`
-- `github.com/itdwgmbh/caddy-s3proxy`
+Each run of `.github/workflows/build.yml` builds the latest upstream Caddy
+release with every module from its current `main`, so a module change ships on
+the next build with no change here. It publishes the image to GHCR and builds
+the `.deb` packages; `packages.yml` then triggers
+[package-factory](https://github.com/itdwgmbh/package-factory), which
+publishes the downloads and the signed APT repository.
 
 ## Supply chain
 
-Every published **image** includes:
-
-- **SBOM** — SPDX attestation from BuildKit (Syft)
-- **Provenance** — SLSA provenance (`mode=max`) for the GitHub Actions build
-- **Cosign** — keyless signature via the workflow OIDC identity (Sigstore)
-- **Trivy** — post-push scan (`CRITICAL`/`HIGH`, fixed only); SARIF on the Security tab
+Published images carry an SBOM and SLSA provenance attestation, a keyless
+cosign signature, and a Trivy scan in the repo Security tab.
 
 ```bash
 cosign verify \
